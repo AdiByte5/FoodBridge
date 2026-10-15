@@ -7,7 +7,6 @@ import {
   Cpu,
   LayoutDashboard,
   LogOut,
-  PlayCircle,
   UserRound,
   Users,
 } from 'lucide-react'
@@ -33,7 +32,6 @@ const navItems: NavItem[] = [
   { to: '/recipient', label: 'Recipient Dashboard', icon: <LayoutDashboard size={18} />, roles: ['RECIPIENT'], end: true },
   { to: '/volunteer', label: 'Volunteer Hub', icon: <LayoutDashboard size={18} />, roles: ['VOLUNTEER'], end: true },
   { to: '/engine', label: 'Allocation Engine', icon: <BrainCircuit size={18} />, roles: ['ADMIN'] },
-  { to: '/scenario', label: 'Scenario Runner', icon: <PlayCircle size={18} />, roles: ['ADMIN'] },
   { to: '/analytics', label: 'Reports & Analytics', icon: <Activity size={18} />, roles: ['ADMIN'] },
   { to: '/admin/users', label: 'Users & Verification', icon: <Users size={18} />, roles: ['ADMIN'] },
   { to: '/admin/system', label: 'Audit & System', icon: <Cpu size={18} />, roles: ['ADMIN'] },

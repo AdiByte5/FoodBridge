@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Inbox,
   ShieldCheck,
-  Sparkles,
   TriangleAlert,
   Truck,
 } from 'lucide-react'
@@ -127,14 +126,9 @@ export function AdminDashboard() {
         title="Command center"
         subtitle={`Welcome back, ${user?.fullName?.split(' ')[0] ?? 'administrator'}. Start with what needs a decision, then review the network.`}
         actions={
-          <>
-            <Link to="/engine" className="btn-secondary">
-              <BrainCircuit size={15} /> Allocation engine
-            </Link>
-            <Link to="/scenario" className="btn-primary">
-              <Sparkles size={15} /> Run scenario
-            </Link>
-          </>
+          <Link to="/engine" className="btn-primary">
+            <BrainCircuit size={15} /> Open allocation engine
+          </Link>
         }
       />
 

@@ -46,7 +46,7 @@ export function SystemPage() {
   const resetDemo = async () => {
     setResetting(true)
     try {
-      const { data } = await api.post<{ message: string; donations: number }>('/scenario/reset')
+      const { data } = await api.post<{ message: string; donations: number }>('/admin/sample-data/restore')
       toast.success(`Sample data restored — ${data.donations} donations reloaded`)
       await load()
     } catch (error) {

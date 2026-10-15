@@ -75,14 +75,17 @@ accepted categories).
 > "The engine's inputs are owned by the recipient — they keep their demand and capacity up to
 > date, and that immediately changes how they score in future allocations."
 
-### 6 · The full pipeline, if you want to show it (2 min) — Scenario Runner
+### 6 · Finish the rescue yourself (2.5 min) — Volunteer Hub → Recipient
 
-Back to admin → **Scenario Runner** → **Run scenario**. Ten narrated steps run against the live
-system: donation → engine decision → acceptance → volunteer matched → pickup → in transit →
-delivered → receipt confirmed → analytics updated.
+Sign out → sign in as `volunteer@foodbridge.org` / `Volunteer@123`. Open the pickup task and
+walk it through: **Accept task → Start pickup → Mark in transit → Mark delivered**.
 
-> "This is the same workflow end-to-end: the engine's decision, volunteer coordination with a
-> match score, delivery tracking and the analytics all updating from real database writes."
+Then sign in as `recipient@foodbridge.org` / `Recipient@123` and press **Confirm receipt** on
+the delivered allocation.
+
+> "I'm doing each step live, in the account that owns it — the volunteer moves the delivery
+> through its stages, and the recipient closes it by confirming receipt. Storage load, the
+> volunteer's delivery count, notifications and the audit trail all update from this."
 
 ### 7 · Close (1 min) — Command Center
 
@@ -111,8 +114,8 @@ engine prefers whoever has received less. The analytics page measures the spread
 and the match reasoning is written into the assignment record.
 
 **"Is this real data or hardcoded screens?"**
-Everything is MySQL. The scenario run writes real rows: donation, allocation with score
-breakdown, volunteer assignment, delivery timestamps, notifications and audit entries.
+Everything is MySQL. Each click writes real rows: donation, allocation with its score breakdown,
+volunteer assignment, delivery timestamps, notifications and audit entries.
 `GET /actuator/health` shows the live database connection.
 
 **"What's left to do?"**
@@ -135,3 +138,16 @@ Spring Security JWT, and MySQL 26.7 — the exact stack from the Lab 2 requireme
 1. `./scripts/start-all.sh`
 2. Admin → **Audit & System** → **Restore sample data** (so the numbers are pristine).
 3. Keep this run sheet open on your phone or second screen, and the app full-screen in the browser.
+
+## Emergency fallback (only if something breaks mid-demo)
+
+The one-click rescue still exists behind the admin API, but it is not linked anywhere in the app:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"email":"admin@foodbridge.org","password":"Admin@123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+curl -s -X POST http://localhost:8080/api/admin/sample-data/scenario -H "Authorization: Bearer $TOKEN" | head -c 200
+```
+
+It replays donation → allocation → volunteer → delivery → confirmation in one call. Use it only
+as a recovery move, then carry on manually.

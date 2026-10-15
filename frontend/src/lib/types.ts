@@ -357,26 +357,6 @@ export interface SystemHealth {
   activeComponents: string[]
 }
 
-export interface DemoStep {
-  order: number
-  title: string
-  description: string
-  status: string
-  data: Record<string, unknown>
-}
-
-export interface DemoScenario {
-  scenarioId: string
-  narrative: string
-  steps: DemoStep[]
-  donationId: number
-  allocationId: number
-  recommendedRecipient: string
-  priorityScore: number
-  ranked: RecipientCandidate[]
-  decisionExplanation: string
-}
-
 export interface PlatformStats {
   donations: number
   recipientOrganizations: number

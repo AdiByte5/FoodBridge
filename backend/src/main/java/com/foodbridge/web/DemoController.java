@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/scenario")
+@RequestMapping("/api/admin/sample-data")
 @PreAuthorize("hasRole('ADMIN')")
 public class DemoController {
 
@@ -22,12 +22,16 @@ public class DemoController {
         this.demoService = demoService;
     }
 
-    @PostMapping("/reset")
+    @PostMapping("/restore")
     public Map<String, Object> reset() {
         return demoService.resetDemo();
     }
 
-    @PostMapping("/run")
+    /**
+     * Optional utility: replays a complete rescue (donation to confirmed delivery)
+     * in one call. Not surfaced in the web app; useful as a fallback for demos.
+     */
+    @PostMapping("/scenario")
     public AdminDtos.DemoScenarioResponse run(@AuthenticationPrincipal UserPrincipal principal) {
         return demoService.runScenario(principal.userId());
     }

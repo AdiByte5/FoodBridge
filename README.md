@@ -10,7 +10,7 @@ every verified recipient across six weighted factors, recommends the best match,
 decision in plain English, coordinates the closest volunteer and tracks the rescue all the way
 to a confirmed delivery.
 
-![Scenario runner](docs/screenshots/05-scenario-timeline.png)
+![Allocation engine](docs/screenshots/03-allocation-engine.png)
 
 ---
 
@@ -100,8 +100,8 @@ enough free storage, and only organizations that accept that food category.
 | ![Allocation engine](docs/screenshots/03-allocation-engine.png) | ![Analytics](docs/screenshots/04-analytics.png) |
 | ![Recipient dashboard](docs/screenshots/07-recipient-dashboard.png) | ![Volunteer hub](docs/screenshots/08-volunteer-hub.png) |
 
-More in [`docs/screenshots/`](docs/screenshots/) — donor workspace, scenario runner timeline
-and the analytics detail views.
+More in [`docs/screenshots/`](docs/screenshots/) — the donor workspace, the sign-up flow and
+the analytics detail views.
 
 ---
 
@@ -113,13 +113,13 @@ Matches the submitted Lab 3 system architecture diagram — layered, modular, an
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
 │ Presentation Layer · React 19 + TypeScript + Tailwind v4 + Recharts   │
-│  Login · role dashboards · allocation engine · analytics · scenarios  │
+│  Login · sign up · role dashboards · allocation engine · analytics    │
 └───────────────────────────────┬───────────────────────────────────────┘
                                 │ REST + JWT (Bearer)
 ┌───────────────────────────────▼───────────────────────────────────────┐
 │ Application Layer · Spring Boot 4 REST controllers                    │
 │  Auth · Donation · Recipient · Volunteer · Allocation · Notification  │
-│  Analytics · Admin · Scenario                                         │
+│  Analytics · Admin · Sample data                                      │
 ├───────────────────────────────────────────────────────────────────────┤
 │ Business Logic Layer · services & rules                               │
 │  AuthService · DonationService · RecipientService · VolunteerService  │
@@ -172,22 +172,21 @@ and the independent `AllocationEngine` service, plus the `UserRole`, `DonationSt
 | Donor | Donor dashboard (own donations, preview match, history) · Notifications |
 | Recipient organization | Recipient dashboard (incoming allocations, demand & preferences) · Notifications |
 | Volunteer | Volunteer hub (availability, assignments, delivery tracking) · Notifications |
-| Administrator | Command center · Allocation engine · Scenario runner · Reports & analytics · Users & verification · Audit & system · Notifications |
+| Administrator | Command center · Allocation engine · Reports & analytics · Users & verification · Audit & system · Notifications |
 
 Every endpoint is enforced server-side as well (401 without a token, 403 for the wrong role),
 so a donor can never read platform-wide allocation or analytics data.
 
-## Scenario runner
+## End-to-end workflow
 
-Admin → **Scenario Runner** executes the complete production workflow against the live system in
-10 narrated steps:
+Every rescue follows the same path, each step performed by the role that owns it:
 
-`Donation registered → Engine evaluates 6 factors → Allocation proposed → Recipient accepts →
-Volunteer matched & accepted → Pickup started → In transit → Delivered → Receipt confirmed →
-Analytics updated`
+`Donor registers surplus food → administrator runs the allocation engine → recipient accepts →
+volunteer collects, delivers and marks it delivered → recipient confirms receipt →
+analytics and the audit trail update`
 
-Every step writes real rows to MySQL, sends in-app notifications and appends to the audit log.
-A presentation run sheet is in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+A presentation run sheet — what to click, in what order, and what to say — is in
+[`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
 ---
 
@@ -205,7 +204,7 @@ A presentation run sheet is in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 | `GET /api/notifications` · `/unread-count` · `POST /{id}/read` · `/read-all` | Notification center |
 | `GET /api/analytics/overview` · `GET /api/analytics/export/donations.csv` | Reports & analytics |
 | `GET /api/admin/users` · `POST /users/{id}/verify` · `PATCH /users/{id}/status` · `GET /audit-logs` · `GET /system-health` | Admin oversight |
-| `POST /api/scenario/run` · `POST /api/scenario/reset` | Scenario runner & sample data restore |
+| `POST /api/admin/sample-data/restore` | Reload the sample dataset (administrator) |
 
 Public: `GET /api/public/categories`, `/engine-weights`, `/platform-stats`.
 Health: `GET /actuator/health`.
@@ -227,7 +226,7 @@ FoodBridge/
 ├── frontend/                    React 19 + TypeScript + Tailwind v4
 │   └── src/
 │       ├── pages/               login, 4 role workspaces, engine, analytics,
-│       │                        users, audit/system, scenario runner
+│       │                        users, audit/system, account
 │       ├── components/          app shell, charts, recommendation panel, UI kit
 │       ├── store/               auth context
 │       └── lib/                 axios client, typed DTOs, formatters

@@ -10,7 +10,6 @@ import { EnginePage } from './pages/EnginePage'
 import { LoginPage } from './pages/Login'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { RecipientDashboard } from './pages/RecipientDashboard'
-import { ScenarioPage } from './pages/ScenarioPage'
 import { SignupPage } from './pages/SignupPage'
 import { SystemPage } from './pages/SystemPage'
 import { UsersPage } from './pages/UsersPage'
@@ -116,14 +115,6 @@ export default function App() {
         element={
           <Protected roles={['ADMIN']}>
             <SystemPage />
-          </Protected>
-        }
-      />
-      <Route
-        path="/scenario"
-        element={
-          <Protected roles={['ADMIN']}>
-            <ScenarioPage />
           </Protected>
         }
       />
