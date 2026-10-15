@@ -12,7 +12,8 @@ import {
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Card, PageHeader, ProgressBar, SectionTitle, Skeleton } from '../components/ui'
+import { Card, PageHeader, SectionTitle, Skeleton } from '../components/ui'
+import { statusColors } from '../components/charts'
 import { api, errorMessage } from '../lib/api'
 import { compactNumber, expiryLabel, kg, prettyStatus, relativeTime } from '../lib/format'
 import type { AdminUser, AllocationView, Analytics, Donation } from '../lib/types'
@@ -119,16 +120,6 @@ export function AdminDashboard() {
   }
 
   const pipeline = analytics.statusFunnel.filter((slice) => slice.value > 0)
-  const pipelineMax = Math.max(...pipeline.map((slice) => slice.value), 1)
-  const pipelineTones: Record<string, string> = {
-    PENDING: 'amber',
-    ALLOCATED: 'sky',
-    PICKED_UP: 'sky',
-    DELIVERED: 'brand',
-    COMPLETED: 'brand',
-    CANCELLED: 'rose',
-    EXPIRED: 'rose',
-  }
 
   return (
     <div>
@@ -186,20 +177,18 @@ export function AdminDashboard() {
           </Card>
 
           <Card>
-            <SectionTitle title="Where the food is right now" subtitle="Live status of every donation in the pipeline" />
-            <div className="space-y-4">
+            <SectionTitle title="Where the food is right now" subtitle="Every donation, by its current status" />
+            <div className="grid gap-2 sm:grid-cols-2">
               {pipeline.map((slice) => (
-                <div key={slice.name}>
-                  <div className="flex items-center justify-between text-[13px]">
-                    <span className="font-semibold text-ink-700">{prettyStatus(slice.name)}</span>
-                    <span className="font-bold tabular-nums text-ink-900">
-                      {slice.value}
-                      <span className="ml-2 font-medium text-ink-400">{kg(slice.kg)}</span>
-                    </span>
-                  </div>
-                  <div className="mt-1.5">
-                    <ProgressBar value={(slice.value / pipelineMax) * 100} tone={pipelineTones[slice.name] ?? 'brand'} />
-                  </div>
+                <div key={slice.name} className="flex items-center justify-between gap-3 rounded-xl bg-ink-50 px-3.5 py-3">
+                  <span className="flex items-center gap-2.5 text-[13px] font-semibold text-ink-700">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: statusColors[slice.name] ?? '#0e7c57' }} />
+                    {prettyStatus(slice.name)}
+                  </span>
+                  <span className="text-[13px] font-bold tabular-nums text-ink-900">
+                    {slice.value}
+                    {slice.kg > 0 && <span className="ml-1.5 font-medium text-ink-400">{kg(slice.kg)}</span>}
+                  </span>
                 </div>
               ))}
             </div>
