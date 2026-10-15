@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Java / Maven
+backend/target/
+*.class
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local runtime data & logs (MySQL lives outside the repo in ~/.foodbridge)
+backend/.data/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
