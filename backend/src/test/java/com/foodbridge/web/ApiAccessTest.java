@@ -103,7 +103,7 @@ class ApiAccessTest {
                                   "password": "Meera@123",
                                   "role": "DONOR",
                                   "organizationType": "INDIVIDUAL",
-                                  "address": "Jayanagar, Bengaluru"
+                                  "address": "Adyar, Chennai"
                                 }
                                 """))
                 .andExpect(status().isOk())

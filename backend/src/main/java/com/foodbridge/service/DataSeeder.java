@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Seeds a realistic Bengaluru food-rescue scenario so the platform can be
+ * Seeds a realistic Chennai food-rescue scenario so the platform can be
  * demonstrated immediately: 5 donor businesses, 6 recipient organizations,
  * 4 volunteers and two weeks of donation history.
  */
@@ -121,22 +121,22 @@ public class DataSeeder {
     private List<Donor> seedDonors() {
         List<DonorSeed> seeds = List.of(
                 new DonorSeed("Spice Route Restaurant", OrganizationType.RESTAURANT,
-                        "12, 100 Feet Road, Indiranagar, Bengaluru", 12.9784, 77.6408, true,
+                        "12, 2nd Avenue, Anna Nagar, Chennai", 13.0850, 80.2101, true,
                         "donor@foodbridge.org", "+91 98450 10001"),
                 new DonorSeed("Grand Meridian Hotel", OrganizationType.HOTEL,
-                        "MG Road, Bengaluru", 12.9756, 77.6068, true,
+                        "Anna Salai, Chennai", 13.0604, 80.2496, true,
                         "hotel@foodbridge.org", "+91 98450 10002"),
                 new DonorSeed("FreshMart Supermarket", OrganizationType.SUPERMARKET,
-                        "5th Block, Koramangala, Bengaluru", 12.9352, 77.6245, true,
+                        "Velachery Main Road, Chennai", 12.9791, 80.2210, true,
                         "supermarket@foodbridge.org", "+91 98450 10003"),
                 new DonorSeed("Golden Crust Bakery", OrganizationType.BAKERY,
-                        "4th Block, Jayanagar, Bengaluru", 12.9308, 77.5838, true,
+                        "North Mada Street, Mylapore, Chennai", 13.0339, 80.2691, true,
                         "bakery@foodbridge.org", "+91 98450 10004"),
                 new DonorSeed("Royal Feast Caterers", OrganizationType.CATERING,
-                        "ITPL Main Road, Whitefield, Bengaluru", 12.9698, 77.7500, false,
+                        "OMR, Sholinganallur, Chennai", 12.9010, 80.2279, false,
                         "catering@foodbridge.org", "+91 98450 10005"),
                 new DonorSeed("Nikhil Rao", OrganizationType.INDIVIDUAL,
-                        "Malleshwaram, Bengaluru", 13.0035, 77.5709, true,
+                        "T. Nagar, Chennai", 13.0400, 80.2337, true,
                         "nikhil@foodbridge.org", "+91 98450 10006"));
 
         List<Donor> donors = new ArrayList<>();
@@ -159,26 +159,26 @@ public class DataSeeder {
     private List<RecipientOrganization> seedRecipients(List<FoodCategory> categories) {
         List<RecipientSeed> seeds = List.of(
                 new RecipientSeed("Akshaya Patra Community Kitchen", OrganizationType.NGO,
-                        "Yeshwanthpur Industrial Area, Bengaluru", 13.0280, 77.5540, 400, 120, 150, 1200, true,
+                        "Ambattur Industrial Estate, Chennai", 13.1143, 80.1548, 400, 120, 150, 1200, true,
                         "recipient@foodbridge.org", "+91 98450 20001",
                         List.of("Cooked Meals", "Bakery & Bread", "Fresh Produce", "Packaged & Dry Goods")),
                 new RecipientSeed("Sneha Sadan Orphanage", OrganizationType.ORPHANAGE,
-                        "8th Block, Koramangala, Bengaluru", 12.9380, 77.6290, 120, 35, 60, 180, true,
+                        "Adyar, Chennai", 13.0012, 80.2565, 120, 35, 60, 180, true,
                         "orphanage@foodbridge.org", "+91 98450 20002",
                         List.of("Cooked Meals", "Bakery & Bread", "Sweets & Desserts", "Dairy & Eggs")),
-                new RecipientSeed("Bengaluru Food Bank", OrganizationType.FOOD_BANK,
-                        "Okalipuram, Bengaluru", 12.9850, 77.5560, 600, 210, 260, 2500, true,
+                new RecipientSeed("Chennai Food Bank", OrganizationType.FOOD_BANK,
+                        "Egmore, Chennai", 13.0783, 80.2609, 600, 210, 260, 2500, true,
                         "foodbank@foodbridge.org", "+91 98450 20003", List.of()),
                 new RecipientSeed("Anand Ashram Shelter", OrganizationType.SHELTER,
-                        "9th Block, Jayanagar, Bengaluru", 12.9250, 77.5838, 90, 20, 70, 120, true,
+                        "Triplicane, Chennai", 13.0587, 80.2758, 90, 20, 70, 120, true,
                         "shelter@foodbridge.org", "+91 98450 20004",
                         List.of("Cooked Meals", "Bakery & Bread", "Sweets & Desserts")),
                 new RecipientSeed("Sanjeevini Community Kitchen", OrganizationType.NGO,
-                        "Rajajinagar, Bengaluru", 12.9900, 77.5520, 200, 60, 90, 500, true,
+                        "Guindy, Chennai", 13.0067, 80.2206, 200, 60, 90, 500, true,
                         "kitchen@foodbridge.org", "+91 98450 20005",
                         List.of("Cooked Meals", "Fresh Produce", "Dairy & Eggs")),
                 new RecipientSeed("Hope Foundation Trust", OrganizationType.NGO,
-                        "Electronics City, Bengaluru", 12.8452, 77.6602, 150, 0, 110, 300, false,
+                        "Tambaram, Chennai", 12.9229, 80.1275, 150, 0, 110, 300, false,
                         "hope@foodbridge.org", "+91 98450 20006",
                         List.of("Cooked Meals", "Packaged & Dry Goods")));
 
@@ -217,13 +217,13 @@ public class DataSeeder {
     private List<Volunteer> seedVolunteers() {
         List<VolunteerSeed> seeds = List.of(
                 new VolunteerSeed("Ravi Kumar", "volunteer@foodbridge.org", "+91 98450 30001",
-                        "Bike", AvailabilityStatus.AVAILABLE, "Indiranagar, Bengaluru", 12.9719, 77.6412),
+                        "Bike", AvailabilityStatus.AVAILABLE, "Anna Nagar, Chennai", 13.0878, 80.2101),
                 new VolunteerSeed("Priya Sharma", "priya@foodbridge.org", "+91 98450 30002",
-                        "Scooter", AvailabilityStatus.AVAILABLE, "Koramangala, Bengaluru", 12.9352, 77.6245),
+                        "Scooter", AvailabilityStatus.AVAILABLE, "Adyar, Chennai", 13.0067, 80.2570),
                 new VolunteerSeed("Arjun Mehta", "arjun@foodbridge.org", "+91 98450 30003",
-                        "Car", AvailabilityStatus.AVAILABLE, "MG Road, Bengaluru", 12.9756, 77.6068),
+                        "Car", AvailabilityStatus.AVAILABLE, "T. Nagar, Chennai", 13.0418, 80.2341),
                 new VolunteerSeed("Fatima Begum", "fatima@foodbridge.org", "+91 98450 30004",
-                        "Bike", AvailabilityStatus.OFFLINE, "Whitefield, Bengaluru", 12.9698, 77.7500));
+                        "Bike", AvailabilityStatus.OFFLINE, "Sholinganallur, Chennai", 12.9010, 80.2279));
 
         List<Volunteer> volunteers = new ArrayList<>();
         for (VolunteerSeed seed : seeds) {
@@ -282,7 +282,7 @@ public class DataSeeder {
                 new DonationSeed(2, "Fresh Produce", "Leafy Vegetables", 40, "kg", 0, 26, DonationStatus.ALLOCATED),
                 new DonationSeed(5, "Cooked Meals", "Family Function Surplus", 8, "kg", 3, 4, DonationStatus.COMPLETED),
                 new DonationSeed(3, "Bakery & Bread", "Morning Bakery Surplus", 26, "kg", 0, 18, DonationStatus.PENDING),
-                new DonationSeed(4, "Cooked Meals", "Catering Excess - Veg Pulao", 30, "kg", 0, 6, DonationStatus.PENDING),
+                new DonationSeed(4, "Cooked Meals", "Catering Excess - Veg Pulao", 30, "kg", 0, 2, DonationStatus.PENDING),
                 new DonationSeed(1, "Cooked Meals", "Expired Buffet Tray", 15, "kg", 4, 3, DonationStatus.EXPIRED),
                 new DonationSeed(0, "Dairy & Eggs", "Cancelled Pickup - Curd", 12, "kg", 2, 10, DonationStatus.CANCELLED));
 
@@ -511,7 +511,7 @@ public class DataSeeder {
                                 List<Volunteer> volunteers) {
         LocalDateTime now = LocalDateTime.now();
         audit(admin, "SYSTEM", "PLATFORM_INITIALISED", "Sample dataset loaded", now.minusDays(13));
-        audit(admin, "ADMIN", "ORGANIZATION_VERIFIED", "Verified Bengaluru Food Bank",
+        audit(admin, "ADMIN", "ORGANIZATION_VERIFIED", "Verified Chennai Food Bank",
                 now.minusDays(12).minusHours(4));
         audit(donors.get(0).getUser(), "DONATION", "DONATION_CREATED",
                 "Spice Route Restaurant registered Veg Biryani & Raita (24 kg)", now.minusDays(12));

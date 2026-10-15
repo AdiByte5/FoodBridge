@@ -48,6 +48,9 @@ Walk down the panel:
 
 1. **Eligibility filters** — point at the excluded organisations and their reasons ("not
    verified yet", "free storage is less than the donation size", "category not accepted").
+   Then select **Catering Excess – Veg Pulao** instead: it has only 2 hours of safe window left,
+   so three organisations are rejected with *"the trip needs about 85 min but only 60 min are
+   available before the safe window closes"* — this is my own food-safety rule, described below.
 2. **Ranked recipients** — scores with distances, best match first.
 3. **Six-factor breakdown** — expiry urgency 25%, demand match 20%, storage fit 15%,
    proximity 15%, food preference 15%, fairness 10%.
@@ -104,6 +107,15 @@ Point at the KPIs, the 14-day rescue trend, the fairness chart and the pipeline 
 Three eligibility filters, then six weighted factors (expiry urgency 25%, demand match 20%,
 storage fit 15%, proximity 15%, food preference 15%, fairness 10%). The formula lives in
 `AllocationEngineService`; the weights are exposed at `GET /api/public/engine-weights`.
+
+**"What is your own contribution — this could have been generated?"**
+"The scoring model is standard engineering. The rule that is mine is the food-safety arrival
+check: before scoring, the engine works out whether the food can physically get there in time —
+distance divided by 20 km/h city speed, plus 10 minutes handling, keeping an hour free for the
+recipient to serve it. If it can't arrive safely, the organisation is rejected with a reason,
+not just scored lower. I started with distance as a soft score and changed it to a hard rule
+after realising that 'too far' isn't a lower priority, it's unsafe. The assumptions are mine to
+defend — and they're in docs/DESIGN_DECISIONS.md."
 
 **"How do you stop one NGO taking everything?"**
 The fairness factor scores each recipient by kilograms received in the last 30 days, so the

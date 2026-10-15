@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, BadgeCheck, Info, MapPin, Sparkles, Trophy } from 'lucide-react'
+import { AlertTriangle, BadgeCheck, Clock, Info, MapPin, Sparkles, Trophy } from 'lucide-react'
 import { expiryLabel, kg, scoreTone } from '../lib/format'
 import type { Recommendation } from '../lib/types'
 import { FactorBar, ScoreRing } from './ui'
@@ -56,6 +56,16 @@ export function RecommendationPanel({ recommendation }: { recommendation: Recomm
                   <span className="chip bg-white text-ink-600 ring-1 ring-ink-200">
                     {winner.distanceKm ?? '—'} km away
                   </span>
+                  {winner.spareMinutes != null && winner.spareMinutes > 0 && (
+                    <span className="chip bg-emerald-50 text-emerald-700">
+                      <Clock size={12} /> arrives with ~{winner.spareMinutes} min to spare
+                    </span>
+                  )}
+                  {winner.arrivalMinutes != null && (
+                    <span className="chip bg-white text-ink-600 ring-1 ring-ink-200">
+                      ~{winner.arrivalMinutes} min pickup to handover
+                    </span>
+                  )}
                   <span className="chip bg-white text-ink-600 ring-1 ring-ink-200">
                     {kg(winner.freeCapacityKg)} free storage
                   </span>
@@ -137,8 +147,12 @@ export function RecommendationPanel({ recommendation }: { recommendation: Recomm
       <div className="flex items-start gap-2.5 rounded-xl bg-ink-50 p-3.5">
         <Info size={15} className="mt-0.5 shrink-0 text-ink-400" />
         <div className="text-[12px] leading-relaxed text-ink-500">
+          <span className="font-semibold text-ink-700">Food-safety rule: </span>
+          {recommendation.safetyRule?.description}
+          <span className="mt-1.5 block">
           <span className="font-semibold text-ink-700">Scoring model: </span>
           {recommendation.weights.map((w) => `${w.label} ${w.weight}%`).join(' · ')}
+          </span>
           <span className="mt-1 block">
             Filters applied: {recommendation.appliedFilters.join('; ')}.
           </span>

@@ -58,9 +58,9 @@ class AllocationEngineServiceTest {
         Donor donor = Donor.builder()
                 .donorId(9L)
                 .organizationName("Spice Route Restaurant")
-                .address("Indiranagar, Bengaluru")
-                .latitude(12.9784)
-                .longitude(77.6408)
+                .address("Anna Nagar, Chennai")
+                .latitude(13.0850)
+                .longitude(80.2101)
                 .verified(true)
                 .build();
 
@@ -72,7 +72,7 @@ class AllocationEngineServiceTest {
                 .quantity(20.0)
                 .unit("kg")
                 .expiryTime(LocalDateTime.now().plusHours(4))
-                .pickupAddress("Indiranagar, Bengaluru")
+                .pickupAddress("Anna Nagar, Chennai")
                 .storageRequirement(StorageRequirement.HOT_HOLDING)
                 .status(DonationStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -115,10 +115,10 @@ class AllocationEngineServiceTest {
     @Test
     @DisplayName("ineligible recipients are excluded with a reason and only eligible ones are ranked")
     void filtersIneligibleRecipients() {
-        RecipientOrganization good = recipient(1, "Good NGO", 200, 50, 40, 12.97, 77.64, true);
-        RecipientOrganization full = recipient(2, "Full Warehouse", 100, 90, 20, 12.97, 77.64, true);
-        RecipientOrganization wrongCategory = recipient(3, "Bakery Only NGO", 300, 10, 60, 12.97, 77.64, true);
-        RecipientOrganization unverified = recipient(4, "Unverified NGO", 300, 10, 60, 12.97, 77.64, false);
+        RecipientOrganization good = recipient(1, "Good NGO", 200, 50, 40, 13.083, 80.215, true);
+        RecipientOrganization full = recipient(2, "Full Warehouse", 100, 90, 20, 13.083, 80.215, true);
+        RecipientOrganization wrongCategory = recipient(3, "Bakery Only NGO", 300, 10, 60, 13.083, 80.215, true);
+        RecipientOrganization unverified = recipient(4, "Unverified NGO", 300, 10, 60, 13.083, 80.215, false);
 
         when(recipientRepository.findAllByOrderByOrganizationNameAsc())
                 .thenReturn(List.of(good, full, wrongCategory, unverified));
@@ -145,8 +145,8 @@ class AllocationEngineServiceTest {
     @Test
     @DisplayName("the closer recipient with matching demand wins, and the factors add up to the score")
     void closerRecipientWins() {
-        RecipientOrganization near = recipient(1, "Near NGO", 200, 50, 25, 12.98, 77.65, true);
-        RecipientOrganization far = recipient(2, "Far NGO", 120, 20, 20, 12.85, 77.90, true);
+        RecipientOrganization near = recipient(1, "Near NGO", 200, 50, 25, 13.0830, 80.2150, true);
+        RecipientOrganization far = recipient(2, "Far NGO", 120, 20, 20, 12.9010, 80.2279, true);
 
         when(recipientRepository.findAllByOrderByOrganizationNameAsc()).thenReturn(List.of(far, near));
         preferences(Map.of(1L, List.of(cookedMeals), 2L, List.of(cookedMeals)));
@@ -169,8 +169,8 @@ class AllocationEngineServiceTest {
     @Test
     @DisplayName("fairness favours the organization that received less in the last 30 days")
     void fairnessPrefersUnderServedRecipient() {
-        RecipientOrganization overServed = recipient(1, "Over-served NGO", 300, 40, 40, 12.975, 77.641, true);
-        RecipientOrganization underServed = recipient(2, "Under-served NGO", 300, 40, 40, 12.975, 77.641, true);
+        RecipientOrganization overServed = recipient(1, "Over-served NGO", 300, 40, 40, 13.0840, 80.2110, true);
+        RecipientOrganization underServed = recipient(2, "Under-served NGO", 300, 40, 40, 13.0840, 80.2110, true);
 
         when(recipientRepository.findAllByOrderByOrganizationNameAsc())
                 .thenReturn(List.of(overServed, underServed));
@@ -185,5 +185,31 @@ class AllocationEngineServiceTest {
         assertThat(result.recommended().factors()).filteredOn(f -> f.key().equals("fairness"))
                 .first()
                 .satisfies(factor -> assertThat(factor.score()).isEqualTo(100.0));
+    }
+
+    @Test
+    @DisplayName("food that cannot arrive before the safe window closes is excluded, however good the match")
+    void farRecipientIsExcludedForSafety() {
+        // the same 20 kg of hot food, but only two hours of safe window left
+        donation.setExpiryTime(LocalDateTime.now().plusHours(2));
+
+        RecipientOrganization near = recipient(1, "Adyar NGO", 200, 20, 30, 13.0012, 80.2565, true);   // ~11 km
+        RecipientOrganization far = recipient(2, "Tambaram NGO", 200, 20, 30, 12.9229, 80.1275, true); // ~20 km
+        when(recipientRepository.findAllByOrderByOrganizationNameAsc()).thenReturn(List.of(far, near));
+        preferences(Map.of(1L, List.of(cookedMeals), 2L, List.of(cookedMeals)));
+
+        EngineDtos.RecommendationResponse result = engine.recommend(100L);
+
+        assertThat(result.recommended()).isNotNull();
+        assertThat(result.recommended().organizationName()).isEqualTo("Adyar NGO");
+        assertThat(result.recommended().spareMinutes()).isNotNull().isGreaterThan(0);
+
+        assertThat(result.ranked()).filteredOn(EngineDtos.RecipientCandidate::excluded).hasSize(1);
+        EngineDtos.RecipientCandidate rejected = result.ranked().stream()
+                .filter(EngineDtos.RecipientCandidate::excluded)
+                .findFirst()
+                .orElseThrow();
+        assertThat(rejected.organizationName()).isEqualTo("Tambaram NGO");
+        assertThat(rejected.exclusionReason()).contains("Cannot arrive safely");
     }
 }

@@ -171,7 +171,7 @@ export function SignupPage() {
                     className="input"
                     value={address}
                     onChange={(event) => setAddress(event.target.value)}
-                    placeholder={role === 'DONOR' ? 'Pickup area, e.g. Indiranagar, Bengaluru' : 'Where you are located'}
+                    placeholder={role === 'DONOR' ? 'Pickup area, e.g. Anna Nagar, Chennai' : 'Where you are located'}
                   />
                 </div>
               )}
@@ -275,7 +275,7 @@ export function SignupPage() {
                     className="input"
                     value={address}
                     onChange={(event) => setAddress(event.target.value)}
-                    placeholder="e.g. Koramangala, Bengaluru"
+                    placeholder="e.g. Adyar, Chennai"
                   />
                 </div>
               </div>

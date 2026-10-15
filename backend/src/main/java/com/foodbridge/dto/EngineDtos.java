@@ -23,6 +23,8 @@ public final class EngineDtos {
             String organizationType,
             String address,
             Double distanceKm,
+            Integer arrivalMinutes,
+            Integer spareMinutes,
             Double freeCapacityKg,
             Double demandKg,
             boolean preferenceMatch,
@@ -49,10 +51,22 @@ public final class EngineDtos {
             RecipientCandidate recommended,
             String summary,
             List<String> appliedFilters,
-            List<EngineWeight> weights) {
+            List<EngineWeight> weights,
+            SafetyRule safetyRule) {
     }
 
     public record EngineWeight(String key, String label, double weight, String description) {
+    }
+
+    /**
+     * The food-safety rule that runs before scoring: food must be able to reach
+     * the recipient with enough time left to serve it safely.
+     */
+    public record SafetyRule(
+            double urbanSpeedKmh,
+            int handlingMinutes,
+            int serveBufferMinutes,
+            String description) {
     }
 
     public record VolunteerCandidate(

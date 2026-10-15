@@ -49,7 +49,7 @@ No MySQL handy? Run the API with the embedded H2 profile instead:
 `cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=h2`
 </details>
 
-The database seeds itself on first boot with a realistic Bengaluru scenario — 5 donor
+The database seeds itself on first boot with a realistic Chennai scenario — 5 donor
 businesses, 6 recipient organizations, 4 volunteers and two weeks of donation history.
 Admin → **Audit & System** can restore that sample dataset at any time.
 
@@ -88,7 +88,21 @@ Admin → **Audit & System** can restore that sample dataset at any time.
     dashboard.
 
 **Eligibility filters** run before scoring: only verified organizations, only recipients with
-enough free storage, and only organizations that accept that food category.
+enough free storage, only organizations that accept that food category — and only organizations
+the food can actually reach in time.
+
+### Original contribution: the food-safety arrival rule
+
+Before scoring, the engine estimates the pickup-to-handover time for every organisation
+(distance ÷ 20 km/h city travel + 10 min handling) and compares it with the time left on the
+food's safe window, keeping a 60-minute serving buffer. **Organisations that cannot receive the
+food safely are excluded with a written reason** rather than quietly scoring lower — e.g.
+*"the trip needs about 85 min (travel + handling) but only 60 min are available before the safe
+window closes"*. Winners show how much time they have to spare.
+
+It is visible on the Allocation Engine page with the seeded dataset, and the reasoning behind it
+— including the assumptions and the alternatives that were rejected — is documented in
+[`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md).
 
 ---
 
@@ -233,6 +247,7 @@ FoodBridge/
 ├── scripts/                     start-all / start-mysql / stop-all
 ├── docs/
 │   ├── screenshots/             UI screenshots
+│   ├── DESIGN_DECISIONS.md      the rules I chose, and the alternatives I rejected
 │   └── DEMO_SCRIPT.md           presentation walkthrough
 └── preContent/                  the original submitted lab PDFs
 ```
@@ -243,10 +258,11 @@ FoodBridge/
 cd backend && ./mvnw test
 ```
 
-Eight automated tests run against an in-memory H2 database, so they do not touch your MySQL data:
+Nine automated tests run against an in-memory H2 database, so they do not touch your MySQL data:
 
 - **AllocationEngineServiceTest** — eligibility filters (unverified, insufficient storage, category
-  mismatch), weighted scoring and factor totals, and the fairness factor preferring the
+  mismatch), the food-safety arrival rule rejecting an organisation that cannot receive the food
+  in time, weighted scoring and factor totals, and the fairness factor preferring the
   organization that received less.
 - **ApiAccessTest** — unauthenticated requests return 401, a donor is blocked from admin-only
   endpoints with 403, recipients only reach their own allocations, the administrator can read

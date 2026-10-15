@@ -27,6 +27,19 @@ public class AllocationEngineService {
     public static final double W_PREFERENCE = 15.0;
     public static final double W_FAIRNESS = 10.0;
 
+    // ------------------------------------------------------------------
+    // Food-safety arrival rule.
+    // Food that cannot reach a recipient with enough time left to serve it is
+    // never allocated there, however well it would otherwise score. The
+    // assumptions below describe conservative Chennai city conditions.
+    // ------------------------------------------------------------------
+    public static final double URBAN_SPEED_KMH = 20.0;
+    public static final int HANDLING_MINUTES = 10;
+    public static final int SERVE_BUFFER_MINUTES = 60;
+
+    private record Arrival(int travelMinutes, int arrivalMinutes, int availableMinutes, int spareMinutes) {
+    }
+
     private final FoodDonationRepository donationRepository;
     private final RecipientOrganizationRepository recipientRepository;
     private final AllocationRepository allocationRepository;
@@ -74,6 +87,25 @@ public class AllocationEngineService {
                         "Whether the recipient accepts this food category."),
                 new EngineDtos.EngineWeight("fairness", "Fair Distribution", W_FAIRNESS,
                         "Balances recent allocation history so no single organization is over-served."));
+    }
+
+    public EngineDtos.SafetyRule safetyRule() {
+        return new EngineDtos.SafetyRule(URBAN_SPEED_KMH, HANDLING_MINUTES, SERVE_BUFFER_MINUTES,
+                "Before scoring, the engine checks whether the food can actually arrive in time: it assumes "
+                        + (int) URBAN_SPEED_KMH + " km/h city travel plus " + HANDLING_MINUTES
+                        + " minutes of handling, and requires at least " + SERVE_BUFFER_MINUTES
+                        + " minutes left on the safe window so the recipient can still serve it.");
+    }
+
+    /** Travel and handover estimate for one recipient, or null when the location is unknown. */
+    private Arrival arrival(Double distanceKm, double hoursToExpiry) {
+        if (distanceKm == null || distanceKm.isNaN()) {
+            return null;
+        }
+        int travelMinutes = (int) Math.round(distanceKm / URBAN_SPEED_KMH * 60);
+        int arrivalMinutes = travelMinutes + HANDLING_MINUTES;
+        int availableMinutes = (int) Math.round(hoursToExpiry * 60) - SERVE_BUFFER_MINUTES;
+        return new Arrival(travelMinutes, arrivalMinutes, availableMinutes, availableMinutes - arrivalMinutes);
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +176,7 @@ public class AllocationEngineService {
                 response.categoryName(), response.hoursToExpiry(), response.evaluatedAt(),
                 response.eligibleCount(), response.excludedCount(), response.ranked(),
                 winner, response.summary() + " Allocation #" + allocation.getAllocationId() + " created as PROPOSED.",
-                response.appliedFilters(), response.weights());
+                response.appliedFilters(), response.weights(), response.safetyRule());
     }
 
     private EngineDtos.RecommendationResponse evaluate(FoodDonation donation) {
@@ -165,6 +197,7 @@ public class AllocationEngineService {
         filters.add("Only verified recipient organizations are evaluated");
         filters.add("Recipients without enough free storage capacity are excluded");
         filters.add("Recipients that do not accept the food category are excluded");
+        filters.add("Recipients that cannot be reached safely before the food expires are excluded");
 
         int excluded = 0;
         for (RecipientOrganization recipient : recipients) {
@@ -196,6 +229,16 @@ public class AllocationEngineService {
                 continue;
             }
 
+            Arrival arrival = arrival(distance, hours);
+            if (arrival != null && arrival.spareMinutes() < 0) {
+                excluded++;
+                candidates.add(excludedCandidate(recipient, distance, free,
+                        "Cannot arrive safely - the trip needs about " + arrival.arrivalMinutes()
+                                + " min (travel + handling) but only " + Math.max(arrival.availableMinutes(), 0)
+                                + " min are available before the safe window closes"));
+                continue;
+            }
+
             double proximityScore = GeoUtils.proximityScore(distance);
             double receivedKg = received30.getOrDefault(recipient.getRecipientId(), 0.0);
             long allocationsLast30 = allocationRepository
@@ -219,6 +262,8 @@ public class AllocationEngineService {
                     recipient.getOrganizationType() == null ? null : recipient.getOrganizationType().name(),
                     recipient.getAddress(),
                     distance == null || distance.isNaN() ? null : GeoUtils.round(distance, 2),
+                    arrival == null ? null : arrival.arrivalMinutes(),
+                    arrival == null ? null : arrival.spareMinutes(),
                     GeoUtils.round(free, 1),
                     recipient.getDemandKg(),
                     hasPreferences && matchesPreference,
@@ -226,7 +271,7 @@ public class AllocationEngineService {
                     GeoUtils.round(receivedKg, 1),
                     total,
                     factors,
-                    buildExplanation(recipient, factors, distance, donation),
+                    buildExplanation(recipient, factors, distance, donation, arrival == null ? null : arrival.spareMinutes()),
                     false,
                     null));
         }
@@ -239,7 +284,7 @@ public class AllocationEngineService {
         return new EngineDtos.RecommendationResponse(
                 donation.getDonationId(), donation.getFoodName(), donation.getQuantity(), safeUnit(donation),
                 categoryName(donation), hours, now, eligible.size(), excluded,
-                candidates, recommended, summary, filters, weights());
+                candidates, recommended, summary, filters, weights(), safetyRule());
     }
 
     private EngineDtos.RecipientCandidate excludedCandidate(RecipientOrganization recipient, Double distance,
@@ -249,6 +294,7 @@ public class AllocationEngineService {
                 recipient.getOrganizationType() == null ? null : recipient.getOrganizationType().name(),
                 recipient.getAddress(),
                 distance == null || distance.isNaN() ? null : GeoUtils.round(distance, 2),
+                null, null,
                 GeoUtils.round(free, 1), recipient.getDemandKg(), false, 0, 0, 0.0,
                 List.of(), "Excluded: " + reason, true, reason);
     }
@@ -336,7 +382,7 @@ public class AllocationEngineService {
     }
 
     private String buildExplanation(RecipientOrganization recipient, List<EngineDtos.FactorScore> factors,
-                                    Double distance, FoodDonation donation) {
+                                    Double distance, FoodDonation donation, Integer spareMinutes) {
         List<EngineDtos.FactorScore> top = factors.stream()
                 .sorted(Comparator.comparingDouble(EngineDtos.FactorScore::contribution).reversed())
                 .limit(3)
@@ -356,9 +402,9 @@ public class AllocationEngineService {
                     .append(" (").append(factor.detail().toLowerCase()).append(")");
         }
         sb.append(".");
-        if (distance != null && !distance.isNaN() && distance < 4) {
-            sb.append(" The short distance keeps the ").append(safeUnit(donation))
-                    .append(" handover well inside the safe window.");
+        if (spareMinutes != null && spareMinutes > 0) {
+            sb.append(" It can collect and deliver the food with about ").append(spareMinutes)
+                    .append(" minutes to spare before the safe window closes.");
         }
         return sb.toString();
     }

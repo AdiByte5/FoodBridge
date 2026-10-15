@@ -69,6 +69,10 @@ export interface RecipientCandidate {
   organizationType?: string | null
   address?: string | null
   distanceKm?: number | null
+  /** Estimated minutes from pickup to handover: travel time + handling. */
+  arrivalMinutes?: number | null
+  /** Minutes left on the safe window after arrival (negative means it cannot arrive in time). */
+  spareMinutes?: number | null
   freeCapacityKg?: number | null
   demandKg?: number | null
   preferenceMatch: boolean
@@ -103,6 +107,12 @@ export interface Recommendation {
   summary: string
   appliedFilters: string[]
   weights: EngineWeight[]
+  safetyRule: {
+    urbanSpeedKmh: number
+    handlingMinutes: number
+    serveBufferMinutes: number
+    description: string
+  }
 }
 
 export interface Donation {
