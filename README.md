@@ -31,6 +31,11 @@ Then open **http://localhost:5173** and sign in with any sample account:
 
 Stop everything with `./scripts/stop-all.sh`.
 
+**Prefer a Desktop shortcut?** Run `./scripts/make-desktop-launcher.sh` once — it creates
+**FoodBridge.command** (starts everything and opens the site) and **Stop FoodBridge.command** on
+your Desktop. Double-click either one; the first launch may ask to let Terminal access your
+Documents folder, and after that it just works.
+
 <details>
 <summary>Manual setup (three terminals)</summary>
 
