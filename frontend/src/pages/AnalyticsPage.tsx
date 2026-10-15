@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { CategoryDonut, DonationTrendChart, FairnessBars, StatusFunnel } from '../components/charts'
 import { Card, PageHeader, SectionTitle, Skeleton, StatStrip } from '../components/ui'
 import { api, errorMessage, TOKEN_KEY } from '../lib/api'
-import { compactNumber, kg } from '../lib/format'
+import { formatCount, formatDuration, kg } from '../lib/format'
 import type { Analytics } from '../lib/types'
 
 export function AnalyticsPage() {
@@ -90,9 +90,9 @@ export function AnalyticsPage() {
               className="ring-0 shadow-none"
               items={[
                 { label: 'Food rescued', value: kg(overview.totalKgRescued) },
-                { label: 'Meals equivalent', value: compactNumber(overview.estimatedMeals) },
+                { label: 'Meals equivalent', value: formatCount(overview.estimatedMeals) },
                 { label: 'Completed rescues', value: overview.completedDonations },
-                { label: 'Avg delivery time', value: `${overview.avgDeliveryHours} h` },
+                { label: 'Avg delivery time', value: formatDuration(overview.avgDeliveryHours) },
               ]}
             />
             <div className="mt-5">
@@ -102,9 +102,12 @@ export function AnalyticsPage() {
 
           <Card>
             <SectionTitle
-              title="Fair distribution between organizations"
-              subtitle="Kilograms each partner received (accepted and completed allocations)"
-              action={<span className="chip bg-ink-100 text-ink-600">spread {fairnessGap}% of peak</span>}
+              title="Food shared between organizations"
+              subtitle={
+                fairnessGap === 0
+                  ? 'Every partner has received the same amount so far'
+                  : `Kilograms each partner received — the busiest partner is ${fairnessGap}% ahead of the quietest`
+              }
             />
             <FairnessBars data={analytics.fairness} height={260} />
             <p className="mt-3 flex items-start gap-2.5 rounded-xl bg-ink-50 p-3.5 text-[12px] leading-relaxed text-ink-500">

@@ -29,7 +29,7 @@ import {
   StatusBadge,
 } from '../components/ui'
 import { api, errorMessage } from '../lib/api'
-import { formatDateTime, kg, prettyStatus } from '../lib/format'
+import { expiryLabel, formatDateTime, kg, prettyStatus } from '../lib/format'
 import type { Assignment, Volunteer } from '../lib/types'
 import { useAuth } from '../store/auth'
 
@@ -178,8 +178,8 @@ export function VolunteerDashboard() {
                       <StatusBadge status={assignment.assignmentStatus} />
                       {isActive && <StatusBadge status={delivery} />}
                       {isActive && (assignment.hoursToExpiry ?? 99) > 0 && (assignment.hoursToExpiry ?? 99) < 4 && (
-                        <span className="chip bg-rose-50 text-rose-700">
-                          <Zap size={12} /> expires in {assignment.hoursToExpiry?.toFixed(1)}h
+                        <span className={`chip ${expiryLabel(assignment.hoursToExpiry).tone.bg} ${expiryLabel(assignment.hoursToExpiry).tone.text}`}>
+                          <Zap size={12} /> {expiryLabel(assignment.hoursToExpiry).text}
                         </span>
                       )}
                     </div>
@@ -249,6 +249,11 @@ export function VolunteerDashboard() {
                     {assignment.assignmentStatus === 'COMPLETED' && (
                       <span className="chip justify-center bg-emerald-50 py-2 text-emerald-700">
                         <CheckCircle2 size={13} /> Completed
+                      </span>
+                    )}
+                    {assignment.assignmentStatus === 'ACCEPTED' && delivery === 'DELIVERED' && (
+                      <span className="chip justify-center bg-sky-50 py-2 text-center text-sky-700">
+                        Delivered — waiting for the recipient to confirm
                       </span>
                     )}
                   </div>

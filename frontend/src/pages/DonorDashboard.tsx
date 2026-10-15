@@ -157,7 +157,7 @@ export function DonorDashboard() {
           <EmptyState
             icon={<History size={20} />}
             title="No donations in this view"
-            message="Register a surplus food donation and the engine will immediately start matching it."
+            message="Register a surplus food donation and it is matched with the most suitable recipient organization."
             action={
               <button className="btn-primary" onClick={() => setCreateOpen(true)}>
                 <Plus size={16} /> Register donation

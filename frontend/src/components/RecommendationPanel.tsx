@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { AlertTriangle, BadgeCheck, Info, MapPin, Sparkles, Trophy } from 'lucide-react'
-import { kg, scoreTone } from '../lib/format'
+import { expiryLabel, kg, scoreTone } from '../lib/format'
 import type { Recommendation } from '../lib/types'
 import { FactorBar, ScoreRing } from './ui'
 
@@ -25,7 +25,7 @@ export function RecommendationPanel({ recommendation }: { recommendation: Recomm
             {recommendation.excludedCount} excluded
           </span>
           <span className="rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15">
-            {recommendation.hoursToExpiry?.toFixed(1)}h to expiry
+            {expiryLabel(recommendation.hoursToExpiry).text} before expiry
           </span>
           <span className="rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15">
             {recommendation.quantity} {recommendation.unit} · {recommendation.categoryName}

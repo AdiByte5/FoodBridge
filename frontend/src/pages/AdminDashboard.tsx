@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { statusColors } from '../components/charts'
 import { Card, PageHeader, SectionTitle, Skeleton } from '../components/ui'
 import { api, errorMessage } from '../lib/api'
-import { compactNumber, kg, prettyStatus, relativeTime } from '../lib/format'
+import { expiryLabel, formatCount, formatDuration, kg, prettyStatus, relativeTime } from '../lib/format'
 import type { AdminUser, AllocationView, Analytics, Donation } from '../lib/types'
 import { useAuth } from '../store/auth'
 
@@ -102,7 +102,7 @@ export function AdminDashboard() {
       id: 'expiry',
       label: 'Donations expiring within 8 hours',
       detail: expiringSorted.length
-        ? expiringSorted.slice(0, 2).map((donation) => `${donation.foodName} · ${donation.hoursToExpiry}h left`).join('  ·  ')
+        ? expiringSorted.slice(0, 2).map((donation) => `${donation.foodName} · ${expiryLabel(donation.hoursToExpiry).text}`).join('  ·  ')
         : 'Every donation has a healthy window',
       count: expiringSorted.length,
       icon: <TriangleAlert size={18} />,
@@ -233,7 +233,7 @@ export function AdminDashboard() {
               </p>
               <span className="text-sm font-bold text-ink-500">kg rescued</span>
             </div>
-            <p className="mt-1 text-[12.5px] text-ink-500">≈ {compactNumber(overview.estimatedMeals)} meals served</p>
+            <p className="mt-1 text-[12.5px] text-ink-500">≈ {formatCount(overview.estimatedMeals)} meals served</p>
 
             <div className="mt-5 space-y-3.5 border-t border-ink-100 pt-4">
               {[
@@ -243,9 +243,9 @@ export function AdminDashboard() {
                   hint: `engine score ${overview.avgPriorityScore}/100 on average`,
                 },
                 {
-                  label: 'Pickup to delivery',
-                  value: `${overview.avgDeliveryHours} h`,
-                  hint: 'average time from pickup to confirmation',
+                  label: 'Average delivery time',
+                  value: formatDuration(overview.avgDeliveryHours),
+                  hint: 'from volunteer pickup to recipient confirmation',
                 },
                 {
                   label: 'Volunteers available',

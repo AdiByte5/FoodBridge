@@ -32,7 +32,7 @@ import {
   Tabs,
 } from '../components/ui'
 import { api, errorMessage } from '../lib/api'
-import { kg, prettyStatus, relativeTime, scoreTone } from '../lib/format'
+import { expiryLabel, kg, prettyStatus, relativeTime, scoreTone } from '../lib/format'
 import type { AllocationView, CategoryView, Recipient } from '../lib/types'
 
 export function RecipientDashboard() {
@@ -177,8 +177,8 @@ export function RecipientDashboard() {
                           <p className="text-[15px] font-bold text-ink-900">{allocation.foodName}</p>
                           <StatusBadge status={allocation.allocationStatus} />
                           {urgent && (
-                            <span className="chip bg-rose-50 text-rose-700">
-                              expires in {allocation.hoursToExpiry?.toFixed(1)}h
+                            <span className={`chip ${expiryLabel(allocation.hoursToExpiry).tone.bg} ${expiryLabel(allocation.hoursToExpiry).tone.text}`}>
+                              {expiryLabel(allocation.hoursToExpiry).text}
                             </span>
                           )}
                         </div>

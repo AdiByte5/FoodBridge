@@ -112,21 +112,43 @@ export function relativeTime(value?: string | null): string {
 export function expiryLabel(hours?: number | null): { text: string; tone: Tone } {
   if (hours === null || hours === undefined) return { text: 'No expiry', tone: tones.neutral }
   if (hours <= 0) return { text: 'Expired', tone: tones.rose }
-  if (hours < 3) return { text: `${hours.toFixed(1)}h left`, tone: tones.rose }
-  if (hours < 8) return { text: `${hours.toFixed(1)}h left`, tone: tones.amber }
-  return { text: `${Math.round(hours)}h left`, tone: tones.green }
+  const text = `${durationWords(hours)} left`
+  if (hours < 3) return { text, tone: tones.rose }
+  if (hours < 8) return { text, tone: tones.amber }
+  return { text, tone: tones.green }
+}
+
+/** 0.94 -> "56 min", 2.5 -> "2 h 30 m", 26 -> "1 day 2 h" */
+export function formatDuration(hours?: number | null): string {
+  if (hours === null || hours === undefined) return '—'
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} min`
+  if (hours < 24) return durationWords(hours)
+  const days = Math.floor(hours / 24)
+  const rest = Math.round(hours - days * 24)
+  return rest === 0 ? `${days} day${days === 1 ? '' : 's'}` : `${days} day${days === 1 ? '' : 's'} ${rest} h`
+}
+
+function durationWords(hours: number): string {
+  const wholeHours = Math.floor(hours)
+  let minutes = Math.round((hours - wholeHours) * 60)
+  let carry = wholeHours
+  if (minutes === 60) {
+    carry += 1
+    minutes = 0
+  }
+  if (carry === 0) return `${minutes} min`
+  return minutes === 0 ? `${carry} h` : `${carry} h ${minutes} m`
+}
+
+/** 1035 -> "1,035" (readable counts, no "1.0k") */
+export function formatCount(value?: number | null): string {
+  if (value === null || value === undefined) return '0'
+  return Math.round(value).toLocaleString('en-IN')
 }
 
 export function kg(value?: number | null, unit = 'kg'): string {
   if (value === null || value === undefined) return '—'
   return `${value % 1 === 0 ? value : value.toFixed(1)} ${unit}`
-}
-
-export function compactNumber(value?: number | null): string {
-  if (value === null || value === undefined) return '0'
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`
-  return `${value}`
 }
 
 export function scoreTone(score?: number | null): string {
