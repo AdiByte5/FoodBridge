@@ -25,7 +25,7 @@ remaining modules are planned for the next review. The website itself has no "de
 Point at the live counters (donations tracked, kg rescued, partner NGOs) — they are read from
 MySQL, not hardcoded.
 
-> "The platform already tracks 15 donations, 6 partner organisations and about 400 kg of food.
+> "The platform already tracks 16 donations, 7 donor accounts and about 410 kg of food.
 > One JWT-secured login serves four roles — donor, recipient organisation, volunteer and
 > administrator — and each role sees only the screens its responsibilities allow."
 
