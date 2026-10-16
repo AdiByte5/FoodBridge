@@ -47,7 +47,7 @@ export function SystemPage() {
     setResetting(true)
     try {
       const { data } = await api.post<{ message: string; donations: number }>('/admin/sample-data/restore')
-      toast.success(`Sample data restored — ${data.donations} donations reloaded`)
+      toast.success(`Application data reset — ${data.donations} donations restored`)
       await load()
     } catch (error) {
       toast.error(errorMessage(error))
@@ -82,7 +82,7 @@ export function SystemPage() {
         subtitle="Every significant action is recorded for accountability. System health is reported live from the running services."
         actions={
           <button className="btn-secondary" onClick={() => void resetDemo()} disabled={resetting}>
-            <RotateCcw size={15} className={resetting ? 'animate-spin' : ''} /> Restore sample data
+            <RotateCcw size={15} className={resetting ? 'animate-spin' : ''} /> Reset application data
           </button>
         }
       />

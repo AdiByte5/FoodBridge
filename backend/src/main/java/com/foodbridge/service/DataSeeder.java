@@ -510,7 +510,7 @@ public class DataSeeder {
     private void seedAuditTrail(User admin, List<Donor> donors, List<RecipientOrganization> recipients,
                                 List<Volunteer> volunteers) {
         LocalDateTime now = LocalDateTime.now();
-        audit(admin, "SYSTEM", "PLATFORM_INITIALISED", "Sample dataset loaded", now.minusDays(13));
+        audit(admin, "SYSTEM", "PLATFORM_INITIALISED", "Platform initialised and reference data loaded", now.minusDays(13));
         audit(admin, "ADMIN", "ORGANIZATION_VERIFIED", "Verified Chennai Food Bank",
                 now.minusDays(12).minusHours(4));
         audit(donors.get(0).getUser(), "DONATION", "DONATION_CREATED",

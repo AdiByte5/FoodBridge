@@ -101,7 +101,7 @@ public class DemoService {
         dataSeeder.seedAll();
         log.info("Demo dataset reset and re-seeded");
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("message", "Sample dataset restored");
+        result.put("message", "Application data reset");
         result.put("donations", donationRepository.count());
         result.put("recipients", recipientRepository.count());
         result.put("volunteers", volunteerRepository.count());

@@ -230,7 +230,7 @@ export function LoginPage() {
           <div className="mt-7">
             <div className="mb-3 flex items-center gap-3">
               <div className="h-px flex-1 bg-ink-200" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400">Sample accounts · one tap</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400">Quick sign-in</span>
               <div className="h-px flex-1 bg-ink-200" />
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -250,9 +250,6 @@ export function LoginPage() {
                 </button>
               ))}
             </div>
-            <p className="mt-4 text-center text-[11.5px] text-ink-400">
-              Passwords follow the pattern <span className="font-semibold text-ink-600">Role@123</span> — sample dataset preloaded.
-            </p>
           </div>
         </motion.div>
       </div>
