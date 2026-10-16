@@ -21,3 +21,6 @@ backend/.data/
 .idea/
 .vscode/
 *.iml
+.build/
+.codex-finalizer/
+.pptx-render/
