@@ -19,7 +19,9 @@ if is_up 8080 /actuator/health; then
   echo "✓ API already running on http://localhost:8080"
 else
   echo "Starting Spring Boot API (log: $RUNDIR/backend.log) …"
-  ( cd "$ROOT/backend" && nohup ./mvnw -q spring-boot:run > "$RUNDIR/backend.log" 2>&1 & echo $! > "$RUNDIR/backend.pid" )
+  # the subshell exec-s into the process itself, so no wrapper shell lingers
+  ( cd "$ROOT/backend" && exec nohup ./mvnw -q spring-boot:run < /dev/null > "$RUNDIR/backend.log" 2>&1 ) &
+  echo $! > "$RUNDIR/backend.pid"
   for _ in $(seq 1 60); do
     if is_up 8080 /actuator/health; then
       echo "✓ API healthy on http://localhost:8080"
@@ -34,7 +36,10 @@ if is_up 5173 /; then
   echo "✓ Web app already running on http://localhost:5173"
 else
   echo "Starting React app (log: $RUNDIR/frontend.log) …"
-  ( cd "$ROOT/frontend" && nohup npm run dev -- --strictPort > "$RUNDIR/frontend.log" 2>&1 & echo $! > "$RUNDIR/frontend.pid" )
+  # stdin from /dev/null: vite exits when its stdin closes (e.g. Terminal window closed),
+  # so it must never inherit the terminal's stdin.
+  ( cd "$ROOT/frontend" && exec nohup npm run dev -- --strictPort < /dev/null > "$RUNDIR/frontend.log" 2>&1 ) &
+  echo $! > "$RUNDIR/frontend.pid"
   for _ in $(seq 1 40); do
     if is_up 5173 /; then
       echo "✓ Web app ready on http://localhost:5173"
@@ -42,6 +47,14 @@ else
     fi
     sleep 1
   done
+fi
+
+if ! is_up 5173 / || ! is_up 8080 /actuator/health; then
+  echo
+  echo "✗ Something did not start correctly."
+  echo "  Web app log: $RUNDIR/frontend.log"
+  echo "  API log:     $RUNDIR/backend.log"
+  exit 1
 fi
 
 cat <<'EOF'
