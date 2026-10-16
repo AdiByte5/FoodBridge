@@ -20,6 +20,10 @@ remaining modules are planned for the next review. The website itself has no "de
 
 ## Run sheet — show these in order
 
+The deck ends after slide 10. These steps are the live demonstration that follows it, in the same
+order as the slides: slide 6 is reproduced on the Allocation Engine page, and slide 9 is reproduced
+in Reports & Analytics.
+
 ### 1 · Opening (1 min) — Login page
 
 Point at the live counters (donations tracked, kg rescued, partner NGOs) — they are read from
@@ -147,9 +151,17 @@ Spring Security JWT, and MySQL 26.7 — the exact stack from the Lab 2 requireme
 
 ## Before sir arrives
 
-1. `./scripts/start-all.sh`
-2. Admin → **Audit & System** → **Restore sample data** (so the numbers are pristine).
-3. Keep this run sheet open on your phone or second screen, and the app full-screen in the browser.
+1. `./scripts/start-all.sh` (or double-click **FoodBridge.command** on the Desktop).
+2. Open **Audit & System → Restore sample data**. Do this immediately before the demo starts, not
+   the night before: the urgent donation used on slide 6 of the deck expires two hours after a
+   restore.
+3. Confirm the Allocation Engine page lists "Catering Excess – Veg Pulo" at the top. The queue is
+   ordered by urgency, so the donation used in the deck is selected automatically.
+4. Keep this run sheet open on your phone or second screen, and the app full-screen in the browser.
+
+**Fallback if the urgent donation has expired:** sign in as `catering@foodbridge.org` / `Donor@123`,
+press **Register donation**, and add any cooked meal with the **+2h** expiry preset. The engine
+treats it exactly like the seeded one, so the arrival rule behaves identically.
 
 ## Emergency fallback (only if something breaks mid-demo)
 

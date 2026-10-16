@@ -55,7 +55,15 @@ export function EnginePage() {
     void load()
   }, [load])
 
-  const pending = useMemo(() => donations.filter((d) => d.status === 'PENDING'), [donations])
+  // most urgent first: the donation closest to its safe window is the one an
+  // operator should look at, and it is selected automatically
+  const pending = useMemo(
+    () =>
+      donations
+        .filter((d) => d.status === 'PENDING')
+        .sort((a, b) => (a.hoursToExpiry ?? 999) - (b.hoursToExpiry ?? 999)),
+    [donations],
+  )
   const proposed = useMemo(() => allocations.filter((a) => a.allocationStatus === 'PROPOSED'), [allocations])
   const accepted = useMemo(() => allocations.filter((a) => a.allocationStatus === 'ACCEPTED' && !a.assignmentId), [allocations])
 
@@ -121,7 +129,7 @@ export function EnginePage() {
       <div className="grid gap-5 xl:grid-cols-[minmax(320px,420px)_1fr]">
         <div className="space-y-5">
           <Card>
-            <SectionTitle title="Select a pending donation" subtitle={`${pending.length} donation${pending.length === 1 ? '' : 's'} awaiting allocation`} />
+            <SectionTitle title="Select a pending donation" subtitle={`${pending.length} donation${pending.length === 1 ? '' : 's'} awaiting allocation, most urgent first`} />
             {loading && <Skeleton className="h-40" />}
             {!loading && pending.length === 0 && (
               <EmptyState
