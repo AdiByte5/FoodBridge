@@ -5,16 +5,21 @@
 
 Restaurants, hotels, supermarkets and caterers throw away surplus food that is still perfectly
 safe to eat, while NGOs, food banks and shelters struggle to meet demand. FoodBridge doesn't
-just connect donors with recipients — its **Intelligent Allocation & Decision Engine** scores
-every verified recipient across six weighted factors, recommends the best match, explains the
-decision in plain English, coordinates the closest volunteer and tracks the rescue all the way
-to a confirmed delivery.
+just connect donors with recipients. Its **Intelligent Allocation & Decision Engine** runs the
+moment food is registered: it removes organizations that cannot take the food safely, scores the
+rest across six weighted factors, explains the choice and hands the rescue to the closest
+volunteer. An administrator can replace the recipient at any point before collection, and the
+record keeps the original decision, the change and the reason for it.
 
 ![Allocation engine](docs/screenshots/03-allocation-engine.png)
 
 ---
 
 ## Quick start
+
+**Requirements:** Java 21, Node.js 20 or newer, npm, and MySQL 8 or newer. The start script expects
+a MySQL server on port 3307; it starts the bundled local instance automatically if one is already
+configured in `~/.foodbridge`.
 
 ```bash
 ./scripts/start-all.sh      # MySQL (3307) + Spring Boot API (8080) + React app (5173)
@@ -30,6 +35,24 @@ Then open **http://localhost:5173** and sign in with any sample account:
 | Volunteer | `volunteer@foodbridge.org` | `Volunteer@123` | Ravi Kumar (Bike) |
 
 Stop everything with `./scripts/stop-all.sh`.
+
+### Environment variables
+
+The defaults work for a local demo. Override them in the shell (or in your IDE run
+configuration) when you move the project to another machine. Do not commit real passwords or
+keys.
+
+| Variable | Default | Used for |
+|---|---|---|
+| `FOODBRIDGE_DB_URL` | `jdbc:mysql://127.0.0.1:3307/foodbridge?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata` | MySQL connection |
+| `FOODBRIDGE_DB_USER` | `foodbridge` | MySQL user |
+| `FOODBRIDGE_DB_PASS` | `foodbridge123` | MySQL password (demo value only) |
+| `FOODBRIDGE_JWT_SECRET` | development key in `application.properties` | Signing JWT tokens (`foodbridge.jwt.secret`); replace it for any real deployment |
+| `FOODBRIDGE_DEMO_SEED` | `true` | Load the sample dataset on first boot (`foodbridge.demo.seed`) |
+| `FOODBRIDGE_ENGINE_AUTOALLOCATE` | `true` | Match every new donation automatically (`foodbridge.engine.auto-allocate`); `false` restores manual runs |
+
+JWT secrets and database passwords belong in the environment, never in the repository, for a
+deployed build.
 
 **Prefer a Desktop shortcut?** Run `./scripts/make-desktop-launcher.sh` once — it creates
 **FoodBridge.command** (starts everything and opens the site) and **Stop FoodBridge.command** on
@@ -67,28 +90,32 @@ Admin → **Audit & System** can restore that sample dataset at any time.
    **Create account** page; donors can be a restaurant, hotel, supermarket, bakery, caterer,
    company, NGO — or an individual donating personally.
 2. **Food donation management** — donors register surplus food with category, quantity, expiry
-   window, storage requirement and pickup point, modify or cancel it while it is still pending,
-   and track it through its lifecycle.
+   window, storage requirement and pickup point, modify it until a recipient accepts, cancel it
+   before collection, and track it through its lifecycle.
 3. **Recipient management** — organizations maintain their demand, storage capacity,
    beneficiaries and accepted food categories; all of it feeds the engine.
-4. **Intelligent Allocation & Decision Engine** — eligibility filters plus six weighted factors
-   produce a ranked recommendation: expiry urgency 25%, demand match 20%, storage fit 15%,
-   proximity 15%, food preference 15%, fairness 10%.
+4. **Intelligent Allocation & Decision Engine** — matches a donation automatically when it is
+   registered. Eligibility filters plus six weighted factors produce a ranked recommendation:
+   expiry urgency 25%, demand match 20%, storage fit 15%, proximity 15%, food preference 15%,
+   fairness 10%.
 5. **Priority-based decision scoring** — every allocation stores its 0–100 score and the exact
    per-factor breakdown that produced it.
-6. **Fair resource distribution** — the fairness factor scores recipients by kilograms received
+6. **Administrator override** — the administrator can replace the engine's recipient while
+   nothing has been collected. The record keeps the engine's own score, the previous recipient,
+   the new recipient and the reason for the change, and everyone involved is notified.
+7. **Fair resource distribution** — the fairness factor scores recipients by kilograms received
    in the last 30 days so distribution stays balanced, measured on the analytics dashboard.
-7. **Smart volunteer coordination** — volunteers are matched by proximity (55%), current load
+8. **Smart volunteer coordination** — volunteers are matched by proximity (55%), current load
    (25%) and experience (20%), with a written match explanation.
-8. **Delivery tracking** — pickup → in transit → delivered → recipient confirmation, updating
+9. **Delivery tracking** — pickup → in transit → delivered → recipient confirmation, updating
    storage load, volunteer records and the donation status.
-9. **Notification & tracking** — in-app notifications for every lifecycle event, plus automated
+10. **Notification & tracking** — in-app notifications for every lifecycle event, plus automated
    expiry alerts.
-10. **Reports & analytics** — rescue KPIs, 14-day trend, category mix, pipeline funnel, fairness
+11. **Reports & analytics** — rescue KPIs, 14-day trend, category mix, pipeline funnel, fairness
     distribution, volunteer leaderboard and CSV export.
-11. **Administrative oversight** — organization verification, user management, audit logs and
+12. **Administrative oversight** — organization verification, user management, audit logs and
     live system health.
-12. **Profile management** — every role can update their name, phone and address from the
+13. **Profile management** — every role can update their name, phone and address from the
     account page; volunteers also manage their vehicle, recipients manage demand from their
     dashboard.
 
@@ -200,9 +227,14 @@ so a donor can never read platform-wide allocation or analytics data.
 
 Every rescue follows the same path, each step performed by the role that owns it:
 
-`Donor registers surplus food → administrator runs the allocation engine → recipient accepts →
+`Donor registers surplus food → the engine matches a recipient automatically → recipient accepts →
 volunteer collects, delivers and marks it delivered → recipient confirms receipt →
 analytics and the audit trail update`
+
+When no organization is eligible, the donation stays in the waiting queue with the reason written
+to the audit trail. The queue is retried when an organization updates its storage capacity or is
+verified, so a waiting donation is picked up without anyone pressing a button. The administrator
+can also re-run the engine for a waiting donation, and can override any decision before collection.
 
 A presentation run sheet — what to click, in what order, and what to say — is in
 [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
@@ -253,7 +285,10 @@ FoodBridge/
 ├── docs/
 │   ├── screenshots/             UI screenshots
 │   ├── DESIGN_DECISIONS.md      the rules I chose, and the alternatives I rejected
-│   └── DEMO_SCRIPT.md           presentation walkthrough
+│   ├── DEMO_SCRIPT.md           presentation walkthrough
+│   ├── SUBMISSION.md            Lab 09 links, setup and submission checklist
+│   ├── AdiByte5_FoodBridge_Presentation.pptx
+│   └── AdiByte5_FoodBridge_Presentation.pdf
 └── preContent/                  the original submitted lab PDFs
 ```
 
@@ -263,7 +298,7 @@ FoodBridge/
 cd backend && ./mvnw test
 ```
 
-Nine automated tests run against an in-memory H2 database, so they do not touch your MySQL data:
+Fifteen automated tests run against an in-memory H2 database, so they do not touch your MySQL data:
 
 - **AllocationEngineServiceTest** — eligibility filters (unverified, insufficient storage, category
   mismatch), the food-safety arrival rule rejecting an organisation that cannot receive the food
@@ -272,6 +307,34 @@ Nine automated tests run against an in-memory H2 database, so they do not touch 
 - **ApiAccessTest** — unauthenticated requests return 401, a donor is blocked from admin-only
   endpoints with 403, recipients only reach their own allocations, the administrator can read
   platform data, and an individual can sign up as a donor under their own name.
+- **AllocationFlowTest** — registering a donation matches it automatically, a donation that no
+  organization can take stays in the queue, freeing storage retries the queue, an administrator can
+  override the recipient with a written reason, the same organization and unverified organizations
+  are refused, volunteer assignment returns a complete record, and only the administrator can
+  override a decision.
+
+## Lab 09 submission
+
+**Team:** AdiByte5 · **Member:** Adithyan S Nair (24BAI1621) · **Course:** Software Engineering
+Laboratory (PTPS)
+
+| Deliverable | File or link |
+|---|---|
+| Presentation | [`docs/AdiByte5_FoodBridge_Presentation.pptx`](docs/AdiByte5_FoodBridge_Presentation.pptx) · [`docs/AdiByte5_FoodBridge_Presentation.pdf`](docs/AdiByte5_FoodBridge_Presentation.pdf) |
+| Source code | https://github.com/25-26-WIN-BCSE301L-SOFTWARE-ENGINEERING/26-27-fall-se-lab-projects-AdiByte5 |
+| Demo video | Upload the recording to Teams and set it to **Anyone with the link can view** |
+| Live application | Not publicly deployed. Run it locally at `http://localhost:5173` with `./scripts/start-all.sh`. |
+| Submission notes | [`docs/SUBMISSION.md`](docs/SUBMISSION.md) |
+
+The checks for a clean submission:
+
+```bash
+cd backend && ./mvnw test       # 15 tests, in-memory database
+./scripts/start-all.sh          # MySQL 3307, API 8080, site 5173
+open http://localhost:5173
+```
+
+The presentation deck has speaker notes and uses the Lab 3 architecture and Lab 4 ER diagrams.
 
 ## Troubleshooting
 

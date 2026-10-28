@@ -1,38 +1,35 @@
 # FoodBridge live demonstration
 
-The deck explains the design. This walkthrough shows it working: one donation registered by a
-donor, judged by the engine, accepted by a recipient, delivered by a volunteer, confirmed, and
-finally visible in the reports and the audit trail.
+The deck explains the design. This run sheet shows the working system: a donation is matched
+automatically, the administrator reviews and can change the decision, the recipient accepts, a
+volunteer delivers, and the reports and audit trail update.
 
-Plan on 5 minutes for the ten slides and 6 minutes for this demonstration.
+Plan about 4 minutes for the eleven slides and about 6 minutes for the demonstration.
 
 ---
 
-## 1. Setup, five minutes before you present
+## 1. Setup, five minutes before presenting
 
 1. Start the stack: `./scripts/start-all.sh`, or double-click **FoodBridge.command** on the Desktop.
-   Wait for the line **"FoodBridge is running"**.
-2. Open **Audit & System → Restore sample data**. Do this immediately before the demonstration,
-   not the night before: the urgent donation used on slide 6 of the deck expires two hours after
-   a restore.
-3. Open **two browser windows** so you can show two roles at once:
-   - Window A: a normal window, where you will use the administrator and donor accounts.
-   - Window B: a **private window** (Chrome: Command-Shift-N), where you will use the recipient
-     and volunteer accounts.
+   Wait for **"FoodBridge is running"**.
+2. Sign in as the administrator and open **Audit & System → Restore application data**. Do this
+   immediately before presenting, so the waiting donations and the safety-rule example are current.
+3. Open **two browser windows**:
+   - Window A: a normal window for the administrator and the donor.
+   - Window B: a **private window** (Chrome: Command-Shift-N) for the recipient and the volunteer.
 
-   Signing in as a second role in the same window replaces the first session, which is why the
-   private window is needed. Both windows talk to the same local server.
-4. In Window A go to **Command Center**. In Window B open `localhost:5173/login` and leave it there.
-5. Keep this page open on your phone or a second screen. Each step below states which window to use.
+   Signing in as a second role in the same window replaces the first session.
+4. In Window A open **Command Center**. In Window B open `localhost:5173/login`.
+5. Keep this page open on your phone or a second screen.
 
-**The accounts you may need** (every password follows the pattern Role@123):
+**Accounts** (every password follows the pattern Role@123):
 
 | Role | Sign in as |
 |---|---|
-| Donor (Spice Route Restaurant) | `donor@foodbridge.org` / `Donor@123` |
+| Donor: Spice Route Restaurant | `donor@foodbridge.org` / `Donor@123` |
 | Recipient: Akshaya Patra Kitchen | `recipient@foodbridge.org` / `Recipient@123` |
-| Recipient: Sneha Sadan Orphanage | `orphanage@foodbridge.org` / `Recipient@123` |
 | Recipient: Chennai Food Bank | `foodbank@foodbridge.org` / `Recipient@123` |
+| Recipient: Sneha Sadan Orphanage | `orphanage@foodbridge.org` / `Recipient@123` |
 | Recipient: Anand Ashram Shelter | `shelter@foodbridge.org` / `Recipient@123` |
 | Recipient: Sanjeevini Community Kitchen | `kitchen@foodbridge.org` / `Recipient@123` |
 | Volunteer: Ravi Kumar | `volunteer@foodbridge.org` / `Volunteer@123` |
@@ -40,9 +37,15 @@ Plan on 5 minutes for the ten slides and 6 minutes for this demonstration.
 | Volunteer: Arjun Mehta | `arjun@foodbridge.org` / `Volunteer@123` |
 | Administrator | `admin@foodbridge.org` / `Admin@123` |
 
-**Check before you start:** the Allocation Engine page should list **"Catering Excess – Veg Pulo"**
-at the top of the queue with about two hours remaining. If it does not, restore the sample data
-again, or use the fallback in section 5.
+**Check before starting.** On the Allocation Engine page, the **Waiting for a match** card should
+list two donations:
+
+- **Late Night Buffet Surplus**, 12 kg, about one hour left. No organization can reach it inside
+  the safe window.
+- **Bulk Bakery Order - Cancelled**, 450 kg. It is larger than the free storage of every verified
+  organization.
+
+If they are missing, restore the sample data again.
 
 ---
 
@@ -50,183 +53,109 @@ again, or use the fallback in section 5.
 
 ### Part 1. The donor registers surplus food (Window A, 60 seconds)
 
-Sign out if needed, then on the login page press the **Donor** sample account button and **Sign in**.
+Sign out if needed. On the login page press **Donor** and **Sign in**.
 
-- Point at the sidebar: a donor sees only their own workspace and notifications. No engine page,
-  no reports.
+- Point at the sidebar: a donor sees only their own workspace and notifications. No engine page
+  and no reports.
 - Press **Register donation** and enter:
-  - Food: `Veg Pulao & Raita`
+  - Food: `Veg Biryani & Raita`
   - Category: `Cooked Meals`
-  - Quantity: `18` kg
-  - Expiry: press the **+2h** preset
+  - Quantity: `12` kg
+  - Expiry: the **+2h** or **+6h** preset
   - Storage: `Hot holding`
   - Notes: `Freshly prepared surplus from the lunch service`
-- Save. The donation appears in the list as **Pending** with a two-hour countdown.
+- Press **Register donation**.
 
-> Say: "This is the only step a donor performs. From here the platform decides who receives it.
-> Notice the donor sees nothing about other organizations or other donations."
+The toast confirms the match and the score. The new card is already **Allocated**, with the
+recipient name and the priority score.
 
-### Part 2. The administrator runs the engine (Window A, 2 minutes) — the centrepiece
+> Say: "The donor registers the food and the platform makes the decision immediately. The donor is
+> not choosing a recipient, and does not see other organizations or other donations."
 
-Sign out, sign in with the **Administrator** sample account, then open **Allocation Engine**.
-The queue is ordered **most urgent first**, and it now holds two donations, both with about two
-hours remaining: the seeded **"Catering Excess - Veg Pulo"** and the one you just registered.
-Select the seeded one for the first preview, because it comes from a caterer across the city and
-that is what makes the arrival rule reject three organizations.
+### Part 2. The administrator reviews the decision (Window A, 90 seconds)
 
-**2a. Show the arrival rule on the seeded donation (40 seconds).**
+Sign out, sign in as **Administrator**, and open **Allocation Engine**.
 
-- Leave **"Catering Excess - Veg Pulo"** selected and press **Preview decision**.
-- Walk down the result:
-  1. The summary line: how many organizations were eligible, how many were excluded.
-  2. The **excluded** list with the reason against each organization. Read the arrival reason aloud:
-     "the trip needs about 85 minutes but only 60 minutes are available before the safe window closes".
-  3. The winner card: priority score out of 100, distance, and **"arrives with about 15 minutes to spare"**.
+- In **Awaiting recipient acceptance**, find **Veg Biryani & Raita** and press **Decision**.
+- Walk down the right-hand panel:
+  1. the summary: how many organizations were eligible and excluded;
+  2. the winner card: priority score, distance, free storage and minutes to spare;
+  3. the six factor bars and the written explanation.
+- Press **Change** on the same row. The dialog lists every organization with the score the engine
+  gave it, and greys out the ones it ruled out.
+- Choose **Chennai Food Bank**, type a reason such as
+  `Coordinator confirmed they can collect it this afternoon`, and press **Confirm change**.
 
-> Say: "Four checks run before any scoring: the organization must be verified, have space, accept
-> the category, and be reachable in time. That last check is the rule I added. If the food cannot
-> arrive while it is still safe to serve, the organization is excluded, and the reason is stored
-> with the decision."
+> Say: "The engine decides automatically, but a coordinator may know something the data does not.
+> The administrator can change the recipient here. The record keeps the engine's score, the
+> previous organization, the new organization and the reason, and all three parties are notified."
 
-**2b. Allocate the donation you registered (60 seconds).**
+### Part 3. Why some donations wait (Window A, 45 seconds) — the safety rule
 
-- Select **"Veg Pulao & Raita"** in the queue instead.
-- Press **Preview decision** again. All verified organizations are within reach of this donor, so
-  the ranking is decided by the six weighted factors rather than by the safety constraint. Point
-  at the factor bars and read the decision explanation.
-- Press **Run & allocate**. The recipient is notified immediately.
+Still on the Allocation Engine page:
 
-### Part 3. The recipient organization sees the allocation (Window B, 90 seconds)
+- Select **Late Night Buffet Surplus** and press **Preview decision**. Every organization is
+  excluded because the trip needs longer than the one hour left, including handling time.
+- Select **Bulk Bakery Order - Cancelled** and press **Preview decision**. Every organization is
+  excluded because 450 kg is more than the free storage anywhere on the platform.
 
-Look at the winner card from Part 2b: the engine has named the organization it recommends. In the
-private window, sign in with **that** organization's account (see the table above; the account
-matches the organization name).
+> Say: "The platform refuses to promise food it cannot deliver safely. These two are genuinely
+> waiting. The queue is retried automatically when an organization frees storage or is verified."
 
-- The dashboard lists the incoming allocation, and the card shows the food,
-  quantity, donor name, distance and the priority score.
-- Press **Why this match?** The same decision is shown from the recipient's side: the factor bars
-  and the explanation.
-- Press **Accept allocation**. A volunteer is matched and assigned automatically; the card now
-  shows the volunteer's name and phone number.
-- Optional, 20 seconds: open **Demand & preferences**, change the registered demand, and save. This
-  is one of the engine's inputs, and the recipient controls it.
+### Part 4. The recipient sees and accepts the allocation (Window B, 60 seconds)
 
-> Say: "The recipient sees only its own allocations and its own demand profile. It never sees the
-> platform's other data. When it accepts, the system assigns the best available volunteer on its own."
+In the private window, sign in as **Chennai Food Bank** (`foodbank@foodbridge.org`).
 
-### Part 4. The volunteer collects and delivers (Window B, 90 seconds)
+- The incoming allocation shows the food, quantity, donor, distance and priority score.
+- Press **Accept allocation**. A volunteer is matched and assigned automatically.
+- Point out the volunteer name and phone number on the card.
 
-The recipient's card names the volunteer the platform assigned automatically. Sign out and sign in
-with **that** volunteer's account (see the table above).
+> Say: "The recipient sees only its own allocations and its own demand profile. When it accepts,
+> the system assigns the best available volunteer without anyone arranging it by phone."
 
-- Show the assignment card: the pickup address, the drop-off address, the route distance, the
-  match score of about 88 out of 100 and the written reason the engine chose this volunteer.
-- Press **Accept task**, then **Start pickup**, then **Mark in transit**, then **Mark delivered**,
-  pausing on each step.
+### Part 5. The volunteer collects and delivers (Window B, 90 seconds)
 
-> Say: "The volunteer's queue is matched by distance, current workload and experience. Each status
-> change notifies the donor and the recipient, and the delivery is tracked from pickup to handover."
+Sign out and sign in as the volunteer named on the card.
 
-### Part 5. The recipient confirms, and the whole record closes (Window B, then Window A, 60 seconds)
+- Show the assignment: pickup and drop-off, route distance, match score and the written reason.
+- Press **Accept task**, then **Start pickup**, then **Mark in transit**, then **Mark delivered**.
 
-- Stay in the volunteer window only long enough to note that the assignment now reads
-  *Delivered, waiting for the recipient to confirm*.
-- Sign out, sign in as the same recipient organization again, and press **Confirm receipt**.
+> Say: "Volunteers are matched by distance, current workload and experience. Every status change
+> notifies the donor and the recipient and is recorded in the audit trail."
 
-> Say: "The recipient closes the loop. That single action completes the donation, adds one to the
-> volunteer's completed deliveries, increases the recipient's storage load, reduces its demand,
-> and writes notifications and audit entries for everyone involved."
+### Part 6. Confirmation and reports (Window B, then Window A, 45 seconds)
 
-Now switch to **Window A**:
+- Sign out and sign back in as **Chennai Food Bank**. Press **Confirm receipt**.
+- In Window A open **Reports & Analytics**. The rescued kilograms, meals and acceptance rate move.
+- Open **Audit & System → Audit log** and show the two key lines:
+  - `ENGINE_ALLOCATED` with actor **system**, the automatic decision;
+  - `ALLOCATION_OVERRIDDEN` with actor **Adithyan S Nair**, the change and its reason.
 
-- **Sign in as the donor** (the account that registered the food). The same donation now reads
-  **Completed**, and the card shows the recipient organization, the priority score out of 100 and
-  the volunteer's name. Open **Details** to show the lifecycle timeline and the stored decision
-  explanation.
-
-> Say: "This is the same record, seen by the donor: who received it, who delivered it, the score
-> the engine gave it, and the reason it was chosen."
-
-- **Sign in as the administrator** again and finish on the oversight screens:
-  - **Command Center**: the rescued total and the pipeline have moved.
-  - **Reports & Analytics**: point at the 14-day trend and the fairness chart. Explain that
-    organizations that received less in the last 30 days score higher on the fairness factor, so
-    distribution balances over time.
-  - **Audit & System**: the audit trail lists the whole sequence, with the actor and the timestamp
-    for each step.
-
-> Say: "This is the accountability the requirements asked for. Every action is recorded, and every
-> allocation keeps the score and the reasoning behind it."
-
-### Part 6. Two short closing demonstrations (60 seconds)
-
-**Role enforcement is on the server, not just the interface.**
-In Window A, sign in as the donor and type `/admin` in the address bar. The application returns you
-to the donor workspace, and the API answers with `403 Forbidden` for that role.
-
-> Say: "A donor cannot read platform data even by guessing the URL, because the server checks the
-> role and the ownership of every record."
-
-**Notifications are per role.**
-Open the bell in each window. Each account received only its own messages, and the unread badge
-counts what it has not read yet.
+> Say: "One confirmation closes the loop: the donation completes, the volunteer's completed count
+> and the recipient's storage figures update, and the audit trail keeps every decision."
 
 ---
 
-## 3. Four things worth pausing on
+## 3. Recovery during the demonstration
 
-1. **The arrival rule.** Slide 6 and Part 2 show the same decisions. This is the contribution you
-   can defend: the three assumptions and the change from a score to a hard constraint.
-2. **The decision explanation.** Every allocation stores a written reason, visible to the
-   administrator, the donor and the recipient. Most platforms store no justification at all.
-3. **Automatic volunteer assignment.** The recipient accepts, and the platform assigns the best
-   available volunteer without the donor or the recipient arranging anything.
-4. **The audit trail.** Walk down the list: registration, allocation, acceptance, pickup, transit,
-   delivery, confirmation. Each row names the actor and the time.
-
----
-
-## 4. If something goes wrong
-
-| Symptom | Recovery |
+| Situation | What to do |
 |---|---|
-| Numbers look stale or the demo donation is missing | **Audit & System → Restore sample data**, then continue |
-| "Catering Excess – Veg Pulo" has expired | Register a fresh cooked meal with the **+2h** preset as the donor. The engine behaves identically |
-| A page shows an error | Reload the window. The server is unaffected |
-| The API is not responding | Run `./scripts/start-all.sh` again, then reload |
-| You need one complete rescue in a single action | `curl -X POST http://localhost:8080/api/admin/sample-data/scenario -H "Authorization: Bearer <admin token>"`. Use this only as a recovery move, then carry on manually |
+| The engine picks another recipient | Continue with that organization's account from the table. For the override, still choose **Chennai Food Bank** so you know the login. |
+| No volunteer was assigned | On the Allocation Engine page, find the accepted allocation and press **Assign**. The best available volunteer is chosen. |
+| Your new donation stays in the waiting queue | Press **Preview decision** and read the exclusion reason. If it is storage, open the recipient's dashboard, raise the storage capacity and save; the queue retries automatically. |
+| The screen shows the wrong data | Sign in as administrator and use **Audit & System → Restore application data**. This wipes donations you added manually. |
+| A page looks stale | Refresh once. The two windows share the server, so the other window already has the new state. |
 
----
+## 4. Short answers if asked
 
-## 5. Questions sir is likely to ask
+**Is the engine AI?** No. It is a rule-based decision engine. It applies hard eligibility filters,
+then six explicit weights, ranks the eligible organizations and stores a written explanation. The
+weights and rules can be inspected and defended; a trained model could not explain a decision with
+this project's data.
 
-**"What is your own contribution?"**
-The food-safety arrival rule. The engine estimates pickup to handover time from the distance and a
-handling allowance, compares it with the remaining safe window, keeps sixty minutes free for
-serving, and excludes organizations that cannot arrive in time. It began as a distance score and
-became a hard constraint, because late arrival is a safety failure rather than a lower priority.
-The three assumptions are in `docs/DESIGN_DECISIONS.md`.
+**What is original here?** The food-safety arrival rule: estimated travel plus handling is compared
+with the remaining safe window minus a serving buffer. Food that cannot arrive safely is excluded
+before scoring. The override-with-reason record is the second design choice.
 
-**"How is this different from existing donation platforms?"**
-They list a donation and let the first organization claim it. Here every eligible organization is
-ranked, unsafe assignments are excluded, recent distribution affects the score, every decision
-carries a written explanation, and all actions are audited.
-
-**"How is the volunteer chosen?"**
-55 percent proximity to the pickup point, 25 percent current workload and 20 percent completed
-deliveries, with the reason stored on the assignment.
-
-**"Is the data real or hardcoded?"**
-Everything on screen is read from MySQL. The demonstration writes real rows: the donation, the
-allocation with its factor breakdown, the volunteer assignment, the delivery timestamps,
-notifications and audit entries. `GET /actuator/health` shows the live database connection.
-
-**"What is missing?"**
-Stated on slide 10: straight line distances rather than road routing, one average travel speed for
-all vehicles, no map input or GPS streaming, in-app notifications only, a small single city
-dataset, and fixed weights rather than a model trained on real history. Each limitation has a
-matching item in the future work list.
-
-**"What is the tech stack?"**
-React 19 and TypeScript on the front end, Spring Boot 4 on Java 21 with Spring Security and JWT,
-Spring Data JPA over MySQL 26 on the back end. The same stack listed in the requirements document.
+**What is left?** Road routing and live traffic, map-based location entry, GPS tracking, deployment
+and SMS notifications. These are listed as future work in the deck.
