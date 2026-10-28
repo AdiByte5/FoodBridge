@@ -3,6 +3,7 @@ package com.foodbridge.service;
 import com.foodbridge.common.ApiException;
 import com.foodbridge.domain.*;
 import com.foodbridge.dto.EngineDtos;
+import com.foodbridge.dto.RecipientDtos;
 import com.foodbridge.repo.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +28,7 @@ public class AllocationEngineService {
     public static final double W_PREFERENCE = 15.0;
     public static final double W_FAIRNESS = 10.0;
 
-    // ------------------------------------------------------------------
-    // Food-safety arrival rule.
-    // Food that cannot reach a recipient with enough time left to serve it is
-    // never allocated there, however well it would otherwise score. The
-    // assumptions below describe conservative Chennai city conditions.
-    // ------------------------------------------------------------------
+    
     public static final double URBAN_SPEED_KMH = 20.0;
     public static final int HANDLING_MINUTES = 10;
     public static final int SERVE_BUFFER_MINUTES = 60;
@@ -444,6 +440,129 @@ public class AllocationEngineService {
                         : candidates.size() + " available volunteer" + (candidates.size() == 1 ? "" : "s")
                         + " evaluated. Best match: " + candidates.get(0).name() + " ("
                         + candidates.get(0).matchScore() + "/100).");
+    }
+
+    /**
+     * Lets the administrator replace the engine's recommendation. The engine's own score for the
+     * chosen organization is stored, and the record states that a human overrode the decision and why.
+     * Allowed while nothing has been collected: a proposed allocation, or an accepted one whose
+     * delivery has not started.
+     */
+    @Transactional
+    public RecipientDtos.AllocationView overrideRecipient(Long allocationId, Long recipientId, String reason,
+                                                          User actor) {
+        Allocation allocation = allocationRepository.findById(allocationId)
+                .orElseThrow(() -> ApiException.notFound("Allocation not found"));
+        FoodDonation donation = allocation.getDonation();
+
+        if (allocation.getAllocationStatus() == AllocationStatus.COMPLETED
+                || allocation.getAllocationStatus() == AllocationStatus.SUPERSEDED
+                || allocation.getAllocationStatus() == AllocationStatus.REJECTED) {
+            throw ApiException.badRequest("This allocation is closed and can no longer be changed");
+        }
+
+        VolunteerAssignment assignment = assignmentRepository
+                .findByAllocation_AllocationId(allocationId).orElse(null);
+        if (assignment != null) {
+            Delivery delivery = deliveryRepository.findByAssignment_AssignmentId(assignment.getAssignmentId()).orElse(null);
+            if (delivery != null && delivery.getDeliveryStatus() != DeliveryStatus.PENDING) {
+                throw ApiException.badRequest("The food is already being delivered, so the recipient can no longer be changed");
+            }
+        }
+
+        RecipientOrganization next = recipientRepository.findById(recipientId)
+                .orElseThrow(() -> ApiException.notFound("Recipient organization not found"));
+        if (!Boolean.TRUE.equals(next.getVerified())) {
+            throw ApiException.badRequest(next.getOrganizationName() + " is not verified yet");
+        }
+        double free = (next.getStorageCapacityKg() == null ? 0 : next.getStorageCapacityKg())
+                - (next.getCurrentLoadKg() == null ? 0 : next.getCurrentLoadKg());
+        if (free < donation.getQuantity()) {
+            throw ApiException.badRequest(next.getOrganizationName() + " has only " + GeoUtils.round(free, 1)
+                    + " kg free storage and the donation is " + donation.getQuantity() + " kg");
+        }
+
+        RecipientOrganization previous = allocation.getRecipient();
+        if (previous.getRecipientId().equals(next.getRecipientId())) {
+            throw ApiException.badRequest("This organization already holds the allocation");
+        }
+
+        if (assignment != null) {
+            Volunteer volunteer = assignment.getVolunteer();
+            int active = volunteer.getActiveDeliveries() == null ? 1 : volunteer.getActiveDeliveries();
+            volunteer.setActiveDeliveries(Math.max(0, active - 1));
+            if (volunteer.getActiveDeliveries() == 0 && volunteer.getAvailabilityStatus() == AvailabilityStatus.BUSY) {
+                volunteer.setAvailabilityStatus(AvailabilityStatus.AVAILABLE);
+            }
+            volunteerRepository.save(volunteer);
+            deliveryRepository.findByAssignment_AssignmentId(assignment.getAssignmentId())
+                    .ifPresent(deliveryRepository::delete);
+            assignmentRepository.delete(assignment);
+            notificationService.notify(volunteer.getUser(), "Assignment withdrawn",
+                    "The allocation for \"" + donation.getFoodName() + "\" was reassigned by the administrator, "
+                            + "so this pickup is no longer yours.", NotificationType.ASSIGNMENT);
+        }
+
+        allocation.setRecipient(next);
+        allocation.setAllocationStatus(AllocationStatus.PROPOSED);
+        allocation.setAllocationTime(LocalDateTime.now());
+
+        // Keep the engine's own assessment of the chosen organization in the record.
+        EngineDtos.RecipientCandidate candidate = evaluate(donation).ranked().stream()
+                .filter(entry -> Objects.equals(entry.recipientId(), next.getRecipientId()))
+                .findFirst()
+                .orElse(null);
+
+        StringBuilder explanation = new StringBuilder();
+        if (candidate != null && !candidate.excluded()) {
+            allocation.setPriorityScore(candidate.totalScore());
+            allocation.setFactorBreakdown(FactorCodec.encode(candidate.factors()));
+            explanation.append(candidate.explanation());
+        } else {
+            allocation.setPriorityScore(null);
+            allocation.setFactorBreakdown(null);
+            explanation.append("Recipient selected by the administrator rather than by the engine.");
+            if (candidate != null && candidate.exclusionReason() != null) {
+                explanation.append(" The engine had set this organization aside because ")
+                        .append(candidate.exclusionReason().toLowerCase().replace("excluded: ", ""))
+                        .append(".");
+            }
+        }
+        explanation.append(" Overridden by the administrator, replacing ")
+                .append(previous.getOrganizationName()).append(".");
+        if (reason != null && !reason.isBlank()) {
+            explanation.append(" Reason given: ").append(reason.trim()).append(".");
+        }
+        allocation.setDecisionExplanation(explanation.toString());
+        Allocation saved = allocationRepository.save(allocation);
+
+        notificationService.notify(next.getUser(), "Allocation assigned to you",
+                "\"" + donation.getFoodName() + "\" (" + donation.getQuantity() + " " + safeUnit(donation)
+                        + ") from " + donation.getDonor().getOrganizationName()
+                        + " has been assigned to your organization by the administrator. "
+                        + "Review and accept it in your dashboard.",
+                NotificationType.ALLOCATION);
+        notificationService.notify(previous.getUser(), "Allocation withdrawn",
+                "The allocation for \"" + donation.getFoodName() + "\" has been moved to another organization.",
+                NotificationType.ALLOCATION);
+        notificationService.notify(donation.getDonor().getUser(), "Recipient changed",
+                "The administrator reassigned your donation \"" + donation.getFoodName() + "\" to "
+                        + next.getOrganizationName() + ".", NotificationType.ALLOCATION);
+        auditService.record(actor, "ALLOCATION", "ALLOCATION_OVERRIDDEN",
+                "Allocation #" + allocationId + " moved from " + previous.getOrganizationName() + " to "
+                        + next.getOrganizationName()
+                        + (reason == null || reason.isBlank() ? "" : " (" + reason.trim() + ")"));
+        return viewMapper.allocationView(saved);
+    }
+
+    /**
+     * Assigns the best (or the chosen) volunteer and returns the allocation in the shape the
+     * dashboard needs, mapped inside the same transaction so no lazy reference is lost.
+     */
+    @Transactional
+    public RecipientDtos.AllocationView assignVolunteerAndView(Long allocationId, Long volunteerId, User actor) {
+        VolunteerAssignment assignment = assignVolunteer(allocationId, volunteerId, actor);
+        return viewMapper.allocationView(assignment.getAllocation());
     }
 
     @Transactional

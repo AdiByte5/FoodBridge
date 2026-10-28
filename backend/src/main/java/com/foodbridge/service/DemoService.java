@@ -182,7 +182,8 @@ public class DemoService {
                 preview.summary(), "COMPLETED", engineData));
 
         EngineDtos.RecommendationResponse allocationResult = engineService.allocate(donation.donationId(), actor);
-        Allocation allocation = allocationRepository.findByDonation_DonationId(donation.donationId())
+        Allocation allocation = allocationRepository
+                .findTopByDonation_DonationIdOrderByAllocationIdDesc(donation.donationId())
                 .orElseThrow(() -> ApiException.notFound("Allocation was not created"));
         Map<String, Object> allocationData = new LinkedHashMap<>();
         allocationData.put("allocationId", allocation.getAllocationId());

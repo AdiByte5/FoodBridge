@@ -99,7 +99,21 @@ public class AllocationController {
                                                         @AuthenticationPrincipal UserPrincipal principal,
                                                         @RequestBody(required = false) Map<String, Long> body) {
         Long volunteerId = body == null ? null : body.get("volunteerId");
-        engineService.assignVolunteer(allocationId, volunteerId, userRepository.findById(principal.userId()).orElse(null));
-        return viewMapper.allocationView(allocationRepository.findById(allocationId).orElseThrow());
+        return engineService.assignVolunteerAndView(allocationId, volunteerId,
+                userRepository.findById(principal.userId()).orElse(null));
+    }
+
+    @PostMapping("/{allocationId}/override")
+    @PreAuthorize("hasRole('ADMIN')")
+    public RecipientDtos.AllocationView override(@PathVariable Long allocationId,
+                                                 @AuthenticationPrincipal UserPrincipal principal,
+                                                 @RequestBody Map<String, Object> body) {
+        Object recipientId = body.get("recipientId");
+        if (recipientId == null) {
+            throw com.foodbridge.common.ApiException.badRequest("recipientId is required");
+        }
+        String reason = body.get("reason") == null ? null : String.valueOf(body.get("reason"));
+        return engineService.overrideRecipient(allocationId, Long.valueOf(String.valueOf(recipientId)), reason,
+                userRepository.findById(principal.userId()).orElse(null));
     }
 }

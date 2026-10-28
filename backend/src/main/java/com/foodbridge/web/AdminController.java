@@ -5,6 +5,7 @@ import com.foodbridge.dto.AdminDtos;
 import com.foodbridge.repo.UserRepository;
 import com.foodbridge.security.UserPrincipal;
 import com.foodbridge.service.AdminService;
+import com.foodbridge.service.DonationService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +18,12 @@ public class AdminController {
 
     private final AdminService adminService;
     private final UserRepository userRepository;
+    private final DonationService donationService;
 
-    public AdminController(AdminService adminService, UserRepository userRepository) {
+    public AdminController(AdminService adminService, UserRepository userRepository, DonationService donationService) {
         this.adminService = adminService;
         this.userRepository = userRepository;
+        this.donationService = donationService;
     }
 
     @GetMapping("/users")
@@ -31,7 +34,10 @@ public class AdminController {
     @PostMapping("/users/{userId}/verify")
     public AdminDtos.UserAdminView verify(@PathVariable Long userId,
                                           @AuthenticationPrincipal UserPrincipal principal) {
-        return adminService.verify(userId, actor(principal));
+        AdminDtos.UserAdminView verified = adminService.verify(userId, actor(principal));
+        // A newly verified organization may be able to take food that is still waiting.
+        donationService.matchWaitingDonations();
+        return verified;
     }
 
     @PatchMapping("/users/{userId}/status")

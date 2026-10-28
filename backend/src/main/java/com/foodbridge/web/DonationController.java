@@ -26,7 +26,9 @@ public class DonationController {
     @PreAuthorize("hasRole('DONOR')")
     public DonationDtos.DonationView create(@AuthenticationPrincipal UserPrincipal principal,
                                             @Valid @RequestBody DonationDtos.CreateDonationRequest request) {
-        return donationService.create(principal.userId(), request);
+        DonationDtos.DonationView created = donationService.create(principal.userId(), request);
+        donationService.matchAutomatically(created.donationId());
+        return donationService.get(created.donationId());
     }
 
     @GetMapping
@@ -57,6 +59,8 @@ public class DonationController {
     public DonationDtos.DonationView update(@PathVariable Long donationId,
                                             @AuthenticationPrincipal UserPrincipal principal,
                                             @RequestBody DonationDtos.UpdateDonationRequest request) {
-        return donationService.update(donationId, principal.userId(), request);
+        DonationDtos.DonationView updated = donationService.update(donationId, principal.userId(), request);
+        donationService.matchAutomatically(updated.donationId());
+        return donationService.get(updated.donationId());
     }
 }

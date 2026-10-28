@@ -8,6 +8,7 @@ import com.foodbridge.repo.DonorRepository;
 import com.foodbridge.repo.FoodCategoryRepository;
 import com.foodbridge.repo.FoodDonationRepository;
 import com.foodbridge.repo.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,8 @@ public class DonationService {
     private final ViewMapper viewMapper;
     private final NotificationService notificationService;
     private final AuditService auditService;
+    private final AllocationEngineService engineService;
+    private final boolean autoAllocate;
 
     public DonationService(FoodDonationRepository donationRepository,
                            DonorRepository donorRepository,
@@ -33,7 +36,9 @@ public class DonationService {
                            UserRepository userRepository,
                            ViewMapper viewMapper,
                            NotificationService notificationService,
-                           AuditService auditService) {
+                           AuditService auditService,
+                           AllocationEngineService engineService,
+                           @Value("${foodbridge.engine.auto-allocate:true}") boolean autoAllocate) {
         this.donationRepository = donationRepository;
         this.donorRepository = donorRepository;
         this.categoryRepository = categoryRepository;
@@ -42,6 +47,8 @@ public class DonationService {
         this.viewMapper = viewMapper;
         this.notificationService = notificationService;
         this.auditService = auditService;
+        this.engineService = engineService;
+        this.autoAllocate = autoAllocate;
     }
 
     @Transactional
@@ -79,13 +86,50 @@ public class DonationService {
                         + donation.getQuantity() + " " + donation.getUnit() + "), expiring "
                         + donation.getExpiryTime() + ".", NotificationType.DONATION);
         notificationService.notify(donor.getUser(), "Donation registered",
-                "\"" + donation.getFoodName() + "\" is now pending allocation. The engine will match it with the best recipient.",
+                "\"" + donation.getFoodName() + "\" has been registered. The allocation engine is matching it with "
+                        + "the most suitable recipient organization now.",
                 NotificationType.DONATION);
         auditService.record(donor.getUser(), "DONATION", "DONATION_CREATED",
                 "Donation #" + donation.getDonationId() + " \"" + donation.getFoodName() + "\" registered by "
                         + donor.getOrganizationName());
 
         return viewMapper.donationView(donation);
+    }
+
+    /**
+     * The engine reacts to a donation on its own: as soon as a donation is registered (or its
+     * details are changed) it is evaluated and matched, with no administrator action in the loop.
+     * Runs after the registration/update transaction has committed and never fails the caller -
+     * when no organization is currently eligible the donation simply stays in the waiting queue
+     * and the reason is written to the audit trail.
+     */
+    public void matchAutomatically(Long donationId) {
+        attemptMatch(donationId, true);
+    }
+
+    /**
+     * Retries every donation that is still waiting. Called when the circumstances the engine
+     * depends on change (an organization gains storage space, or a new one gets verified), so a
+     * waiting donation is picked up on its own instead of needing anyone to press a button.
+     */
+    public void matchWaitingDonations() {
+        for (FoodDonation donation : donationRepository.findByStatusIn(List.of(DonationStatus.PENDING))) {
+            attemptMatch(donation.getDonationId(), false);
+        }
+    }
+
+    private void attemptMatch(Long donationId, boolean recordRefusal) {
+        if (!autoAllocate) {
+            return;
+        }
+        try {
+            engineService.allocate(donationId, null);
+        } catch (ApiException ex) {
+            if (recordRefusal) {
+                auditService.record(null, "ALLOCATION", "ALLOCATION_SKIPPED",
+                        "Engine could not match donation #" + donationId + ": " + ex.getMessage());
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -139,8 +183,13 @@ public class DonationService {
         if (!donation.getDonor().getUser().getUserId().equals(userId)) {
             throw ApiException.forbidden("Only the donor can modify this donation");
         }
-        if (donation.getStatus() != DonationStatus.PENDING) {
-            throw ApiException.badRequest("Only donations that are still pending can be modified");
+        Allocation latest = allocationRepository
+                .findTopByDonation_DonationIdOrderByAllocationIdDesc(donationId).orElse(null);
+        boolean stillOpen = donation.getStatus() == DonationStatus.PENDING
+                || (donation.getStatus() == DonationStatus.ALLOCATED && latest != null
+                && latest.getAllocationStatus() == AllocationStatus.PROPOSED);
+        if (!stillOpen) {
+            throw ApiException.badRequest("A recipient has already accepted this donation, so it can no longer be changed");
         }
         if (request.foodName() != null && !request.foodName().isBlank()) {
             donation.setFoodName(request.foodName().trim());

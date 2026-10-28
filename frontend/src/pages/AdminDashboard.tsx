@@ -19,7 +19,7 @@ import { useAuth } from '../store/auth'
 
 /** Plain-language meaning of every donation status. */
 const statusNotes: Record<string, string> = {
-  PENDING: 'not allocated yet',
+  PENDING: 'no recipient matched yet',
   ALLOCATED: 'proposed to a recipient',
   PICKED_UP: 'with the volunteer',
   DELIVERED: 'waiting for confirmation',

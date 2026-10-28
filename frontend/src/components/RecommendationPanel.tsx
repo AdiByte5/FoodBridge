@@ -98,7 +98,8 @@ export function RecommendationPanel({ recommendation }: { recommendation: Recomm
           <div>
             <p className="text-sm font-bold text-amber-900">No eligible recipient right now</p>
             <p className="mt-0.5 text-[13px] text-amber-800">
-              Verify more organizations or free up storage capacity, then run the engine again.
+              The donation stays in the waiting queue and is matched again the moment an organization becomes eligible -
+              once it is verified, has enough free storage, or can reach the food safely in time.
             </p>
           </div>
         </div>

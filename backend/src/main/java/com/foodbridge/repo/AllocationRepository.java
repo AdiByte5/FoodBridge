@@ -12,7 +12,12 @@ import java.util.Optional;
 
 public interface AllocationRepository extends JpaRepository<Allocation, Long> {
 
-    Optional<Allocation> findByDonation_DonationId(Long donationId);
+    /**
+     * The decision that currently represents a donation. A donation can carry more than one
+     * decision record over its life (a re-run after a rejection, an override, a change of
+     * details), so the newest row is the authoritative one.
+     */
+    Optional<Allocation> findTopByDonation_DonationIdOrderByAllocationIdDesc(Long donationId);
 
     List<Allocation> findByDonation_DonationIdOrderByAllocationTimeDesc(Long donationId);
 

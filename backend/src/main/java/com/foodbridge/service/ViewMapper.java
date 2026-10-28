@@ -35,7 +35,8 @@ public class ViewMapper {
 
     @Transactional(readOnly = true)
     public DonationDtos.DonationView donationView(FoodDonation donation) {
-        Allocation allocation = allocationRepository.findByDonation_DonationId(donation.getDonationId()).orElse(null);
+        Allocation allocation = allocationRepository
+                .findTopByDonation_DonationIdOrderByAllocationIdDesc(donation.getDonationId()).orElse(null);
         VolunteerAssignment assignment = allocation == null ? null
                 : assignmentRepository.findByAllocation_AllocationId(allocation.getAllocationId()).orElse(null);
         Delivery delivery = assignment == null ? null

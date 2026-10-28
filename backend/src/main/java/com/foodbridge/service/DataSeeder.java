@@ -281,8 +281,10 @@ public class DataSeeder {
                 new DonationSeed(0, "Cooked Meals", "Veg Pulao & Dal", 22, "kg", 0, 3, DonationStatus.PICKED_UP),
                 new DonationSeed(2, "Fresh Produce", "Leafy Vegetables", 40, "kg", 0, 26, DonationStatus.ALLOCATED),
                 new DonationSeed(5, "Cooked Meals", "Family Function Surplus", 8, "kg", 3, 4, DonationStatus.COMPLETED),
-                new DonationSeed(3, "Bakery & Bread", "Morning Bakery Surplus", 26, "kg", 0, 18, DonationStatus.PENDING),
-                new DonationSeed(4, "Cooked Meals", "Catering Excess - Veg Pulao", 30, "kg", 0, 2, DonationStatus.PENDING),
+                // These two are still waiting on purpose: the first is larger than the free storage of every
+                // verified organization, and the second cannot be delivered safely inside its safe window.
+                new DonationSeed(3, "Bakery & Bread", "Bulk Bakery Order - Cancelled", 450, "kg", 0, 18, DonationStatus.PENDING),
+                new DonationSeed(4, "Cooked Meals", "Late Night Buffet Surplus", 12, "kg", 0, 1, DonationStatus.PENDING),
                 new DonationSeed(1, "Cooked Meals", "Expired Buffet Tray", 15, "kg", 4, 3, DonationStatus.EXPIRED),
                 new DonationSeed(0, "Dairy & Eggs", "Cancelled Pickup - Curd", 12, "kg", 2, 10, DonationStatus.CANCELLED));
 

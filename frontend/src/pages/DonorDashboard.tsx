@@ -207,20 +207,21 @@ export function DonorDashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {donation.status === 'PENDING' && (
-                    <>
-                      <button
-                        className="btn-secondary py-2 text-[13px]"
-                        onClick={() => void previewMatch(donation)}
-                        disabled={busyId === donation.donationId}
-                      >
-                        {busyId === donation.donationId ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
-                        Preview match
-                      </button>
-                      <button className="btn-ghost py-2 text-[13px]" onClick={() => setEditTarget(donation)}>
-                        <Pencil size={13} /> Edit
-                      </button>
-                    </>
+                  {['PENDING', 'ALLOCATED'].includes(donation.status) && (
+                    <button
+                      className="btn-secondary py-2 text-[13px]"
+                      onClick={() => void previewMatch(donation)}
+                      disabled={busyId === donation.donationId}
+                    >
+                      {busyId === donation.donationId ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+                      Preview match
+                    </button>
+                  )}
+                  {(donation.status === 'PENDING'
+                    || (donation.status === 'ALLOCATED' && donation.allocationStatus === 'PROPOSED')) && (
+                    <button className="btn-ghost py-2 text-[13px]" onClick={() => setEditTarget(donation)}>
+                      <Pencil size={13} /> Edit
+                    </button>
                   )}
                   {['PENDING', 'ALLOCATED'].includes(donation.status) && (
                     <button
@@ -246,9 +247,27 @@ export function DonorDashboard() {
         onClose={() => setCreateOpen(false)}
         categories={categories}
         defaultAddress={user?.address ?? ''}
-        onCreated={() => {
+        onCreated={(donation) => {
           setCreateOpen(false)
           void load()
+          if (donation.recipientName) {
+            toast.success(
+              `Matched with ${donation.recipientName}`,
+              {
+                description:
+                  donation.priorityScore != null
+                    ? `The engine gave it a priority score of ${donation.priorityScore.toFixed(1)}/100. You will be told as the pickup progresses.`
+                    : 'The allocation engine picked this organization for your donation.',
+                duration: 8000,
+              },
+            )
+          } else {
+            toast.info('Donation registered', {
+              description:
+                'No organization can take it right now, so it is waiting in the queue. You will be notified as soon as it is matched.',
+              duration: 8000,
+            })
+          }
         }}
       />
 
@@ -264,7 +283,7 @@ export function DonorDashboard() {
       <Modal
         open={Boolean(preview)}
         onClose={() => setPreview(null)}
-        title="Intelligent allocation recommendation"
+        title="Why this donation went where it did"
         subtitle={preview ? `${preview.donation.foodName} · ${kg(preview.donation.quantity, preview.donation.unit)}` : undefined}
         width="max-w-3xl"
       >
@@ -273,8 +292,8 @@ export function DonorDashboard() {
             <RecommendationPanel recommendation={preview.recommendation} />
             <div className="mt-6 space-y-3">
               <p className="rounded-xl bg-ink-50 p-3.5 text-[12.5px] leading-relaxed text-ink-500">
-                This is the engine&apos;s recommendation for your donation. The allocation is confirmed on the platform
-                side and you will be notified as soon as the volunteer is arranged.
+                This ranking is produced automatically when a donation is registered - opening it changes nothing.
+                You will be notified at every step, from the recipient accepting the food to the delivery being confirmed.
               </p>
               <div className="flex justify-end">
                 <button className="btn-secondary" onClick={() => setPreview(null)}>
@@ -385,7 +404,7 @@ function EditDonationModal({
       open={Boolean(donation)}
       onClose={onClose}
       title="Modify donation"
-      subtitle="Only donations that are still pending allocation can be changed."
+      subtitle="You can change a donation until the recipient accepts it. The engine re-evaluates the match afterwards."
     >
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -454,7 +473,7 @@ function CreateDonationModal({
   onClose: () => void
   categories: CategoryView[]
   defaultAddress: string
-  onCreated: () => void
+  onCreated: (donation: Donation) => void
 }) {
   const [foodName, setFoodName] = useState('')
   const [categoryId, setCategoryId] = useState<number | ''>('')
@@ -480,7 +499,7 @@ function CreateDonationModal({
     }
     setBusy(true)
     try {
-      await api.post('/donations', {
+      const { data } = await api.post<Donation>('/donations', {
         foodName: foodName.trim(),
         categoryId: categoryId === '' ? null : categoryId,
         quantity: Number(quantity),
@@ -490,10 +509,9 @@ function CreateDonationModal({
         storageRequirement: storage,
         notes: notes || null,
       })
-      toast.success('Donation registered — run the engine to allocate it')
       setFoodName('')
       setNotes('')
-      onCreated()
+      onCreated(data)
     } catch (error) {
       toast.error(errorMessage(error))
     } finally {

@@ -3,6 +3,7 @@ package com.foodbridge.web;
 import com.foodbridge.dto.CommonDtos;
 import com.foodbridge.dto.RecipientDtos;
 import com.foodbridge.security.UserPrincipal;
+import com.foodbridge.service.DonationService;
 import com.foodbridge.service.RecipientService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,9 +17,11 @@ import java.util.Map;
 public class RecipientController {
 
     private final RecipientService recipientService;
+    private final DonationService donationService;
 
-    public RecipientController(RecipientService recipientService) {
+    public RecipientController(RecipientService recipientService, DonationService donationService) {
         this.recipientService = recipientService;
+        this.donationService = donationService;
     }
 
     @GetMapping
@@ -36,7 +39,10 @@ public class RecipientController {
     @PreAuthorize("hasRole('RECIPIENT')")
     public RecipientDtos.RecipientView updateDemand(@AuthenticationPrincipal UserPrincipal principal,
                                                     @RequestBody RecipientDtos.DemandUpdateRequest request) {
-        return recipientService.updateDemand(principal.userId(), request);
+        RecipientDtos.RecipientView updated = recipientService.updateDemand(principal.userId(), request);
+        // New storage space or demand can make a waiting donation placeable, so retry the queue.
+        donationService.matchWaitingDonations();
+        return updated;
     }
 
     @GetMapping("/me/preferences")
