@@ -24,3 +24,6 @@ backend/.data/
 .build/
 .codex-finalizer/
 .pptx-render/
+
+# temporary files from chart export
+.chart-data-*/
