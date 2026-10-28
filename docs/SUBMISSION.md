@@ -16,6 +16,7 @@ paste into Teams.
 | Presentation (PPTX) | `docs/AdiByte5_FoodBridge_Presentation.pptx` |
 | Presentation (PDF) | `docs/AdiByte5_FoodBridge_Presentation.pdf` |
 | Source code | https://github.com/25-26-WIN-BCSE301L-SOFTWARE-ENGINEERING/26-27-fall-se-lab-projects-AdiByte5 |
+| Public copy of the code | https://github.com/AdiByte5/FoodBridge |
 | Demo video | Record the walkthrough, upload it to Teams, and set sharing to "Anyone with the link can view" |
 | Live application | Not publicly deployed. The working application runs locally at http://localhost:5173 |
 

@@ -322,6 +322,7 @@ Laboratory (PTPS)
 |---|---|
 | Presentation | [`docs/AdiByte5_FoodBridge_Presentation.pptx`](docs/AdiByte5_FoodBridge_Presentation.pptx) · [`docs/AdiByte5_FoodBridge_Presentation.pdf`](docs/AdiByte5_FoodBridge_Presentation.pdf) |
 | Source code | https://github.com/25-26-WIN-BCSE301L-SOFTWARE-ENGINEERING/26-27-fall-se-lab-projects-AdiByte5 |
+| Public copy of the code | https://github.com/AdiByte5/FoodBridge |
 | Demo video | Upload the recording to Teams and set it to **Anyone with the link can view** |
 | Live application | Not publicly deployed. Run it locally at `http://localhost:5173` with `./scripts/start-all.sh`. |
 | Submission notes | [`docs/SUBMISSION.md`](docs/SUBMISSION.md) |
